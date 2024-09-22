@@ -8,6 +8,7 @@ wheels/
 
 # venv
 .venv
+.python-version
 
 # local config
 .env

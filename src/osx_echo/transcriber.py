@@ -1,15 +1,19 @@
+"""
+This module provides functionality for transcribing audio files and simulating keyboard input.
+
+It contains the Transcriber class, which uses whisper.cpp to convert audio to text,
+and utility functions for typing out the transcribed content using keyboard simulation.
+
+The module relies on the pynput library for keyboard control and the subprocess module
+for running the whisper.cpp executable.
+
+Classes:
+    Transcriber: Handles audio transcription and text output via simulated typing.
+"""
+
 import subprocess
 
 from pynput import keyboard
-
-
-def _type_content(text):
-    """
-    Type out content on the keyboard after stripping leading whitespace and converting newlines to spaces.
-    """
-    ctrl = keyboard.Controller()
-    raw_text = text.lstrip().replace("\n", " ")
-    ctrl.type(raw_text)
 
 
 class Transcriber:
@@ -61,3 +65,12 @@ class Transcriber:
             content = f.read()
             print(content)
             _type_content(content)
+
+
+def _type_content(text):
+    """
+    Type out content on the keyboard after stripping leading whitespace and converting newlines to spaces.
+    """
+    ctrl = keyboard.Controller()
+    raw_text = text.lstrip().replace("\n", " ")
+    ctrl.type(raw_text)
