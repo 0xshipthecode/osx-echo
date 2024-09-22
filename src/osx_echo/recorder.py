@@ -1,31 +1,82 @@
-import threading
-import pyaudio
-import wave
+"""
+This module contains the Recorder class, which is responsible for capturing audio
+from the default recording device, saving it as a wave file, and initiating
+transcription.
 
+The module uses PyAudio for audio capture and the wave module for saving audio data.
+It also interacts with a transcriber object to convert the recorded audio to text.
+"""
+
+import threading
+from wave import Wave_write
+
+import pyaudio
 
 class Recorder:
     """
-    Recorder is responsible for grabbing the audio from the default recording device and saving it to the file as wave.
-    It then calls the transcriber to transcribe the audio to text.
+    Recorder is responsible for grabbing audio from the default recording device,
+    saving it as a wave file, and calling a transcriber to convert the audio to text.
 
-    TODO: handle multiple audio devices and allow user to select one.
+    The recording process runs in a separate thread to allow for non-blocking operation.
+
+    TODO: Handle multiple audio devices and allow user to select one.
     """
 
-    def __init__(self, transcriber):
+    def __init__(self, transcriber, input_device_index):
+        """
+        Initialize the Recorder.
+
+        Args:
+            transcriber: An object responsible for transcribing audio.
+            input_device_index (int): Index of the input device to use. If None, defaults to 0.
+
+        Note:
+            This method also prints information about available audio devices.
+        """
         self.is_recording = False
         self.transcriber = transcriber
+        self.input_device_index = input_device_index if input_device_index is not None else 0
+
+        p = pyaudio.PyAudio()
+        info = p.get_host_api_info_by_index(0)
+        for idx in range(info.get('deviceCount')):
+            print(p.get_device_info_by_host_api_device_index(0, idx))
 
     def start(self):
+        """
+        Start the recording process in a new thread.
+
+        This method sets the recording flag to True and spawns a new thread
+        that runs the _recording method.
+        """
         print("Recording!")
         self.is_recording = True
         thread = threading.Thread(target=self._recording)
         thread.start()
 
     def stop(self):
+        """
+        Stop the recording process.
+
+        This method sets the recording flag to False, which will cause the
+        recording thread to finish its execution.
+        """
         print("Done recording!")
         self.is_recording = False
 
     def _recording(self):
+        """
+        Internal method to handle the recording process.
+
+        This method runs in a separate thread and captures audio until `is_recording`
+        is set to False. It then saves the recorded audio as a wave file and
+        initiates the transcription process.
+
+        The audio is recorded with the following parameters:
+        - Format: 16-bit PCM
+        - Channels: 1 (mono)
+        - Sample rate: 16000 Hz
+        """
         self.is_recording = True
         frames_per_buffer = 1024
         p = pyaudio.PyAudio()
@@ -35,6 +86,7 @@ class Recorder:
             rate=16000,
             input=True,
             frames_per_buffer=frames_per_buffer,
+            input_device_index=self.input_device_index
         )
 
         frames = []
@@ -47,11 +99,11 @@ class Recorder:
         p.terminate()
 
         audio_data = b"".join(frames)
-        with wave.open("recording.wav", "wb") as w:
-            w.setnchannels(1)
-            w.setsampwidth(p.get_sample_size(pyaudio.paInt16))
-            w.setframerate(16000)
-            w.writeframes(audio_data)
+        w = Wave_write("recording.wav")
+        w.setnchannels(1)
+        w.setsampwidth(p.get_sample_size(pyaudio.paInt16))
+        w.setframerate(16000)
+        w.writeframes(audio_data)
+        w.close()
 
         self.transcriber.transcribe("recording.wav")
-

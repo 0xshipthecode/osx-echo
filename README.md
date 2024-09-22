@@ -19,6 +19,10 @@ cp env.example .env
 
 3. Run the app in your terminal. OS X will at first refuse to run the software, requiring you to give rights to record the microphone and then later accessibility rights to drive the keyboard.
 
+1. `Settings` -> `Security & Privacy`
+2. Click on `Accessibility`
+3. Toggle the switch for your teminal application.
+
 After those rights are granted the app should work.
 
 ## TODOs
