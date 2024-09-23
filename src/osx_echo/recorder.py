@@ -12,6 +12,7 @@ from wave import Wave_write
 
 import pyaudio
 
+
 class Recorder:
     """
     Recorder is responsible for grabbing audio from the default recording device,
@@ -22,25 +23,29 @@ class Recorder:
     TODO: Handle multiple audio devices and allow user to select one.
     """
 
-    def __init__(self, transcriber, input_device_index):
+    def __init__(self, transcriber, input_device_name):
         """
         Initialize the Recorder.
 
         Args:
             transcriber: An object responsible for transcribing audio.
-            input_device_index (int): Index of the input device to use. If None, defaults to 0.
+            input_device_name (str): exact name of the input device to use.
 
         Note:
             This method also prints information about available audio devices.
         """
         self.is_recording = False
         self.transcriber = transcriber
-        self.input_device_index = input_device_index if input_device_index is not None else 0
+        self.input_device_index = None
 
         p = pyaudio.PyAudio()
-        info = p.get_host_api_info_by_index(0)
-        for idx in range(info.get('deviceCount')):
-            print(p.get_device_info_by_host_api_device_index(0, idx))
+        api_info = p.get_host_api_info_by_index(0)
+        for idx in range(api_info.get('deviceCount')):
+            device_info = (p.get_device_info_by_host_api_device_index(0, idx))
+            if device_info['name'] == input_device_name:
+                self.input_device_index = device_info['index']
+
+        assert self.input_device_index is not None
 
     def start(self):
         """

@@ -10,6 +10,7 @@ from osx_echo.transcriber import Transcriber
 from osx_echo.listeners import build_key_listener
 from osx_echo.config import Config
 
+
 def start_app():
     """
     Orchestrates the startup of the OSX Echo application.
@@ -37,9 +38,10 @@ def start_app():
     config = Config()
 
     whisper_config = config.get_whisper_config()
-    transcriber = Transcriber(whisper_config["whisper_main_path"], whisper_config["whisper_model_path"])
+    transcriber = Transcriber(
+        whisper_config["whisper_main_path"], whisper_config["whisper_model_path"])
 
-    recorder = Recorder(transcriber, config.get_input_device_index())
+    recorder = Recorder(transcriber, config.get_input_device_name())
     app = DictationApp(recorder)
 
     key_listener = build_key_listener(app, config.get_listener_config())

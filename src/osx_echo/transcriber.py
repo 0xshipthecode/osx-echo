@@ -12,6 +12,7 @@ Classes:
 """
 
 import subprocess
+import time
 
 from pynput import keyboard
 
@@ -73,4 +74,6 @@ def _type_content(text):
     """
     ctrl = keyboard.Controller()
     raw_text = text.lstrip().replace("\n", " ")
-    ctrl.type(raw_text)
+    for char in raw_text:
+        ctrl.type(char)
+        time.sleep(0.001)

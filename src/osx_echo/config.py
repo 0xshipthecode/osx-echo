@@ -1,6 +1,7 @@
 import os
 import json
 
+
 class Config:
     """
     A configuration class for managing environment variables and settings.
@@ -17,7 +18,7 @@ class Config:
         self.whisper_main_path = os.environ["WHISPER_MAIN_PATH"]
         self.whisper_model_path = os.environ["WHISPER_MODEL_PATH"]
         self.listener_config = json.loads(os.environ["LISTENER_CONFIG"])
-        self.input_device_index = int(os.environ["INPUT_DEVICE_INDEX"])
+        self.input_device_name = os.environ["INPUT_DEVICE_NAME"]
 
     def get_listener_config(self):
         """
@@ -27,7 +28,7 @@ class Config:
             dict: The listener configuration loaded from the environment.
         """
         return self.listener_config
-    
+
     def get_whisper_config(self):
         """
         Retrieve the Whisper configuration paths.
@@ -36,12 +37,12 @@ class Config:
             dict: A dict containing the Whisper main path and model path.
         """
         return {"whisper_main_path": self.whisper_main_path, "whisper_model_path": self.whisper_model_path}
-    
-    def get_input_device_index(self):
+
+    def get_input_device_name(self):
         """
-        Retrieve the input device index.
+        Retrieve the input device name.
 
         Returns:
-            str: The input device index loaded from the environment.
+            str: The input device name loaded from the environment.
         """
-        return self.input_device_index
+        return self.input_device_name

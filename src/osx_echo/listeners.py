@@ -34,8 +34,36 @@ def build_key_listener(app, listener_config):
         return _DoubleTapListener(app, _parse_key(listener_config["key"]))
     if listener_type == "key_hold":
         return _KeyHoldListener(app, [_parse_key(key) for key in listener_config["keys"]])
-    
+    if listener_type == "key_press":
+        return _KeyPressListener(app,  _parse_key(listener_config["key"]))
+
     raise ValueError(f"Invalid key type: {listener_type}")
+
+
+class _KeyPressListener:
+
+    def __init__(self, app, key):
+        self.app = app
+        self.key = key
+
+    def on_key_press(self, key):
+        """
+        Handle key press events.
+
+        Args:
+            key: The key that was pressed.
+        """
+        if key == self.key:
+            self.app.toggle_recording()
+
+    def on_key_release(self, key):
+        """
+        Handle key release events.
+
+        Args:
+            key: The key that was released.
+        """
+        pass
 
 
 # Double Command key listener taken from: https://github.com/foges/whisper-dictation/blob/main/whisper-dictation.py
@@ -103,8 +131,7 @@ class _KeyHoldListener:
         """
         self.app = app
         # FIX: fix the keys_pressed array to accept the keys argument.
-        self.keys_pressed = {
-            keyboard.Key.cmd_l: False, keyboard.Key.cmd_r: False}
+        self.keys_pressed = {key: False for key in keys}
 
     def on_key_press(self, key):
         """
@@ -132,8 +159,11 @@ class _KeyHoldListener:
                 self.keys_pressed[k] = False
             self.app.stop_recording(None)
 
+
 _key_mapping = {
     "f6": keyboard.Key.f6,
+    "f10": keyboard.Key.f10,
+    "f13": keyboard.Key.f13,
     "cmd_l": keyboard.Key.cmd_l,
     "cmd_r": keyboard.Key.cmd_r,
     "ctrl_l": keyboard.Key.ctrl_l,
@@ -155,4 +185,3 @@ def _parse_key(key):
         return _key_mapping[key]
 
     raise ValueError(f"Invalid key: {key}")
-
