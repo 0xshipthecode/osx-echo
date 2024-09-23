@@ -54,10 +54,10 @@ class Recorder:
         This method sets the recording flag to True and spawns a new thread
         that runs the _recording method.
         """
-        print("Recording!")
-        self.is_recording = True
-        thread = threading.Thread(target=self._recording)
-        thread.start()
+        if not self.is_recording:
+            self.is_recording = True
+            thread = threading.Thread(target=self._recording)
+            thread.start()
 
     def stop(self):
         """
@@ -66,7 +66,6 @@ class Recorder:
         This method sets the recording flag to False, which will cause the
         recording thread to finish its execution.
         """
-        print("Done recording!")
         self.is_recording = False
 
     def _recording(self):
@@ -111,4 +110,5 @@ class Recorder:
         w.writeframes(audio_data)
         w.close()
 
+        # daisy chain the transcriber analyze the wav file and type result
         self.transcriber.transcribe("recording.wav")
