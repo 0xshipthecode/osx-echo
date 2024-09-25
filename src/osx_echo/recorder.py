@@ -42,6 +42,7 @@ class Recorder:
         api_info = p.get_host_api_info_by_index(0)
         for idx in range(api_info.get('deviceCount')):
             device_info = (p.get_device_info_by_host_api_device_index(0, idx))
+            print(f"Device {device_info["index"]}: {device_info["name"]}")
             if device_info['name'] == input_device_name:
                 self.input_device_index = device_info['index']
 
