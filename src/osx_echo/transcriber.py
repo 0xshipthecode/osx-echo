@@ -59,13 +59,20 @@ class Transcriber:
                 "4",
                 "-otxt",
             ],
-            check=True  # Add this line
+            check=True,
+            stdout=subprocess.DEVNULL
         )
 
         with open(audio_path + ".txt", "r", encoding="utf-8") as f:
             content = f.read()
-            print(content)
-            _type_content(content)
+            _type_content(_clean_content(content))
+
+
+def _clean_content(content):
+    """
+    Clean the content by stripping surrounding whitespace, converting newlines to spaces and reducing multiple spaces to a single space.
+    """
+    return content.strip().replace("\n", " ").replace("  ", " ")
 
 
 def _type_content(text):
