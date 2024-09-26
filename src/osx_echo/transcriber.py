@@ -60,7 +60,8 @@ class Transcriber:
                 "-otxt",
             ],
             check=True,
-            stdout=subprocess.DEVNULL
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
         )
 
         with open(audio_path + ".txt", "r", encoding="utf-8") as f:

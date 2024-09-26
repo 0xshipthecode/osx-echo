@@ -47,7 +47,7 @@ class DictationApp(rumps.App):
         """
         if not self.recording_in_progress:
             self.recording_in_progress = True
-            self.title = "⏺"
+            self.title = "👂"
             self.recorder.start()
 
     @rumps.clicked("Stop")
@@ -62,7 +62,7 @@ class DictationApp(rumps.App):
             _: Unused parameter (required by rumps.clicked decorator).
         """
         if self.recording_in_progress:
-            self.title = "Ready"
+            self.title = "⏯"
             self.recording_in_progress = False
             self.recorder.stop()
 

@@ -46,6 +46,7 @@ class Recorder:
             if device_info['name'] == input_device_name:
                 self.input_device_index = device_info['index']
 
+        print(f"Selected device index {self.input_device_index} [{input_device_name}]")
         assert self.input_device_index is not None
 
     def start(self):
