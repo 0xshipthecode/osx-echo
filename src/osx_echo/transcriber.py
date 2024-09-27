@@ -13,6 +13,7 @@ Classes:
 
 import subprocess
 import time
+import re
 
 from pynput import keyboard
 
@@ -71,17 +72,21 @@ class Transcriber:
 
 def _clean_content(content):
     """
-    Clean the content by stripping surrounding whitespace, converting newlines to spaces and reducing multiple spaces to a single space.
+    Clean the content by stripping surrounding whitespace, converting
+    newlines to spaces and reducing multiple spaces to a single space.
     """
     return content.strip().replace("\n", " ").replace("  ", " ")
 
 
 def _type_content(text):
     """
-    Type out content on the keyboard after stripping leading whitespace and converting newlines to spaces.
+    Type out content on the keyboard after stripping leading
+    whitespace and converting newlines to spaces.
     """
     ctrl = keyboard.Controller()
     raw_text = text.lstrip().replace("\n", " ")
-    for char in raw_text:
+    # Remove anything between square brackets, including the brackets themselves
+    clean_text = re.sub(r"\[.*?\]", "", raw_text)
+    for char in clean_text:
         ctrl.type(char)
         time.sleep(0.001)
