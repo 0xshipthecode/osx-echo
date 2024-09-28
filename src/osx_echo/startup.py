@@ -4,7 +4,7 @@ import json
 from pynput import keyboard
 from dotenv import load_dotenv
 
-from osx_echo.dictation_app import DictationApp
+from osx_echo.app import App
 from osx_echo.recorder import Recorder
 from osx_echo.transcriber import Transcriber
 from osx_echo.listeners import build_key_listener
@@ -38,11 +38,10 @@ def start_app():
     config = Config()
 
     whisper_config = config.get_whisper_config()
-    transcriber = Transcriber(
-        whisper_config["whisper_main_path"], whisper_config["whisper_model_path"])
+    transcriber = Transcriber(**whisper_config)
 
     recorder = Recorder(transcriber, config.get_input_device_name())
-    app = DictationApp(recorder)
+    app = App(recorder)
 
     key_listener = build_key_listener(app, config.get_listener_config())
 

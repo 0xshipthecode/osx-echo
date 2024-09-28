@@ -1,11 +1,11 @@
 # osx-echo
 
 This package is heavily inspired by [whisper-dictation](https://github.com/foges/whisper-dictation) but uses whisper.cpp for transcription,
-making it much faster.
+making it much faster and only contains remnants of the original code.
 
 ## Getting started
 
-1. This project uses `rye` to manage Python installations.
+1. This project uses `rye` to manage Python environments.
 
 ```
 rye sync
@@ -17,17 +17,24 @@ rye sync
 cp env.example .env
 ```
 
-3. Run the app in your terminal. OS X will at first refuse to run the software, requiring you to give rights to record the microphone and then later accessibility rights to drive the keyboard.
+3. Run the app in your terminal.
+
+```
+./run
+```
+
+4. OS X will show dialogs that ask for Accessibility permissions which have to be granted for the application to function. If the dialog window doesn't open, you can manually provide the right permissions using the following steps:
 
 1. `Settings` -> `Security & Privacy`
-2. Click on `Accessibility`
-3. Toggle the switch for your teminal application.
+1. Click on `Accessibility`
+1. Toggle the switch for your teminal application.
 
-After those rights are granted the app should work.
+After those rights are granted the app will be able to type the transcribed text.
+
+5. When you activate recording for the first time, the app will also require you to provide permissions to record from the microphone. After you grant these permissions, you actually be ready to work.
 
 ## TODOs
 
-- [ ] Fix the key listener so that it correctly handles key releases in the presence of multiple key presses.
-- [ ] The hotkey configuration doesn't actually work yet. The app uses a fixed set of hotkeys, which is the left and right command key.
+- [x] Fix the key listener so that it correctly handles key releases in the presence of multiple key presses.
 - [ ] Occasionally the app produces a segmentation fault, it's not clear why.
-- [ ] The app leaves the recording file and to the transcription file intact instead of deleting it.
+- [x] Remove the recording file after typing completes.

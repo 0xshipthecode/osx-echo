@@ -6,7 +6,7 @@ recording and transcription process.
 
 import rumps
 
-class DictationApp(rumps.App):
+class App(rumps.App):
     """
     DictationApp is the main statusbar app that governs the recording and transcribing.
 

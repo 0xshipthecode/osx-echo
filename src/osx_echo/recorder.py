@@ -12,6 +12,7 @@ from wave import Wave_write
 
 import pyaudio
 
+from .constants import RECORDING_FILE_NAME
 
 class Recorder:
     """
@@ -105,7 +106,7 @@ class Recorder:
         p.terminate()
 
         audio_data = b"".join(frames)
-        w = Wave_write("recording.wav")
+        w = Wave_write(RECORDING_FILE_NAME)
         w.setnchannels(1)
         w.setsampwidth(p.get_sample_size(pyaudio.paInt16))
         w.setframerate(16000)
@@ -113,4 +114,4 @@ class Recorder:
         w.close()
 
         # daisy chain the transcriber analyze the wav file and type result
-        self.transcriber.transcribe("recording.wav")
+        self.transcriber.transcribe(RECORDING_FILE_NAME)

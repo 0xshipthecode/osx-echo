@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
-/Users/mvejmelka/.rye/shims/python3 -m osx_echo
+~/.rye/shims/python3 -m osx_echo
 

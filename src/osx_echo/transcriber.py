@@ -13,6 +13,7 @@ Classes:
 
 import subprocess
 import time
+import os
 import re
 
 from pynput import keyboard
@@ -31,9 +32,11 @@ class Transcriber:
         model_path (str): Path to the whisper model file to be used for transcription.
     """
 
-    def __init__(self, whisper_path, model_path):
-        self.whisper_path = whisper_path
-        self.model_path = model_path
+    def __init__(self, whisper_main_path=None, whisper_model_path=None):
+        assert whisper_main_path is not None
+        assert whisper_model_path is not None
+        self.whisper_main_path = whisper_main_path
+        self.whisper_model_path = whisper_model_path
 
     def transcribe(self, audio_path):
         """
@@ -51,9 +54,9 @@ class Transcriber:
         """
         subprocess.run(
             [
-                self.whisper_path,
+                self.whisper_main_path,
                 "-m",
-                self.model_path,
+                self.whisper_model_path,
                 "-f",
                 audio_path,
                 "-t",
@@ -68,6 +71,10 @@ class Transcriber:
         with open(audio_path + ".txt", "r", encoding="utf-8") as f:
             content = f.read()
             _type_content(_clean_content(content))
+
+        # cleanup the audio file and the text file
+        os.remove(audio_path)
+        os.remove(audio_path + ".txt")
 
 
 def _clean_content(content):
