@@ -22,6 +22,7 @@ def build_listener_multiplexer(listeners):
 
     return _ListenerMultiplexer(listeners)
 
+
 def build_key_listener(app, language_config):
     """
     Builds a key listener based on the listener configuration.
@@ -78,7 +79,6 @@ class _ListenerMultiplexer:
             listener.on_key_release(key)
 
 
-
 class _KeyPressListener:
 
     def __init__(self, app, key, language_config):
@@ -126,6 +126,7 @@ class _DoubleTapListener:
         self.pressed = 0
         self.last_press_time = 0
         self.language_config = language_config
+
     def on_key_press(self, key):
         """
         Handle key press events.
@@ -173,6 +174,7 @@ class _KeyHoldListener:
         # FIX: fix the keys_pressed array to accept the keys argument.
         self.keys_pressed = {key: False for key in keys}
         self.language_config = language_config
+
     def on_key_press(self, key):
         """
         Handle key press events.

@@ -12,6 +12,7 @@ wheels/
 
 # local config
 .env
+config.json
 
 # recordings
 recording.wav*
