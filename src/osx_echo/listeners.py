@@ -15,7 +15,14 @@ from pynput import keyboard
 from osx_echo.constants import DBL_CLICK_TIMEOUT_MS
 
 
-def build_key_listener(app, listener_config):
+def build_listener_multiplexer(listeners):
+    """
+    Builds a listener multiplexer based on the language configurations.
+    """
+
+    return _ListenerMultiplexer(listeners)
+
+def build_key_listener(app, language_config):
     """
     Builds a key listener based on the listener configuration.
 
@@ -29,22 +36,55 @@ def build_key_listener(app, listener_config):
     Raises:
         ValueError: If an invalid listener type is specified.
     """
+    listener_config = language_config.trigger
     listener_type = listener_config["type"]
     if listener_type == "double_tap":
-        return _DoubleTapListener(app, _parse_key(listener_config["key"]))
+        return _DoubleTapListener(app, _parse_key(listener_config["key"]), language_config)
     if listener_type == "key_hold":
-        return _KeyHoldListener(app, [_parse_key(key) for key in listener_config["keys"]])
+        return _KeyHoldListener(app, [_parse_key(key) for key in listener_config["keys"]], language_config)
     if listener_type == "key_press":
-        return _KeyPressListener(app,  _parse_key(listener_config["key"]))
+        return _KeyPressListener(app,  _parse_key(listener_config["key"]), language_config)
 
     raise ValueError(f"Invalid key type: {listener_type}")
 
 
+class _ListenerMultiplexer:
+    """
+    This class implements a listener that detects double taps of a specified key
+    to toggle recording on and off.
+    """
+
+    def __init__(self, listeners):
+        self.listeners = listeners
+
+    def on_key_press(self, key):
+        """
+        Handle key press events.
+
+        Args:
+            key: The key that was pressed.
+        """
+        for listener in self.listeners:
+            listener.on_key_press(key)
+
+    def on_key_release(self, key):
+        """
+        Handle key release events.
+
+        Args:
+            key: The key that was released.
+        """
+        for listener in self.listeners:
+            listener.on_key_release(key)
+
+
+
 class _KeyPressListener:
 
-    def __init__(self, app, key):
+    def __init__(self, app, key, language_config):
         self.app = app
         self.key = key
+        self.language_config = language_config
 
     def on_key_press(self, key):
         """
@@ -54,7 +94,7 @@ class _KeyPressListener:
             key: The key that was pressed.
         """
         if key == self.key:
-            self.app.toggle_recording()
+            self.app.toggle_recording(self.language_config)
 
     def on_key_release(self, key):
         """
@@ -73,7 +113,7 @@ class _DoubleTapListener:
     to toggle recording on and off.
     """
 
-    def __init__(self, app, key):
+    def __init__(self, app, key, language_config):
         """
         Initialize the _DoubleTapListener.
 
@@ -85,7 +125,7 @@ class _DoubleTapListener:
         self.key = key
         self.pressed = 0
         self.last_press_time = 0
-
+        self.language_config = language_config
     def on_key_press(self, key):
         """
         Handle key press events.
@@ -99,7 +139,7 @@ class _DoubleTapListener:
                 self.last_press_time is not None
                 and current_time - self.last_press_time < DBL_CLICK_TIMEOUT_MS / 1000
             ):  # Double click to start listening
-                self.app.toggle_recording()
+                self.app.toggle_recording(self.language_config)
                 # Not strictly necessary due to the timeout
                 self.last_press_time = None
             else:  # Single click to stop listening
@@ -121,7 +161,7 @@ class _KeyHoldListener:
     When all keys are held, it will record. Whenever one of them is released, the recording will stop.
     """
 
-    def __init__(self, app, keys):
+    def __init__(self, app, keys, language_config):
         """
         Initialize the _KeyHoldListener.
 
@@ -132,7 +172,7 @@ class _KeyHoldListener:
         self.app = app
         # FIX: fix the keys_pressed array to accept the keys argument.
         self.keys_pressed = {key: False for key in keys}
-
+        self.language_config = language_config
     def on_key_press(self, key):
         """
         Handle key press events.
@@ -143,7 +183,7 @@ class _KeyHoldListener:
         if key in self.keys_pressed:
             self.keys_pressed[key] = True
             if all(self.keys_pressed.values()):
-                self.app.start_recording(None)
+                self.app.start_recording(self.language_config)
 
     def on_key_release(self, key):
         """

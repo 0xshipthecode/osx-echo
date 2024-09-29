@@ -18,6 +18,7 @@ import re
 
 from pynput import keyboard
 
+from .config import LanguageConfig
 
 class Transcriber:
     """
@@ -29,16 +30,13 @@ class Transcriber:
 
     Attributes:
         whisper_path (str): Path to the whisper.cpp executable.
-        model_path (str): Path to the whisper model file to be used for transcription.
     """
 
-    def __init__(self, whisper_main_path=None, whisper_model_path=None):
+    def __init__(self, whisper_main_path=None):
         assert whisper_main_path is not None
-        assert whisper_model_path is not None
         self.whisper_main_path = whisper_main_path
-        self.whisper_model_path = whisper_model_path
 
-    def transcribe(self, audio_path):
+    def transcribe(self, audio_path: str, language_support: LanguageConfig):
         """
         Transcribe the given audio file and type out the result.
 
@@ -48,7 +46,7 @@ class Transcriber:
 
         Args:
             audio_path (str): Path to the audio file to be transcribed.
-
+            language_support (LanguageSupport): Language support configuration.
         Raises:
             subprocess.CalledProcessError: If the whisper.cpp process fails.
         """
@@ -56,9 +54,11 @@ class Transcriber:
             [
                 self.whisper_main_path,
                 "-m",
-                self.whisper_model_path,
+                language_support.whisper_model_path,
                 "-f",
                 audio_path,
+                "-l",
+                language_support.language,
                 "-t",
                 "4",
                 "-otxt",

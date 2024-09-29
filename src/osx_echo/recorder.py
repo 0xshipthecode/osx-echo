@@ -12,6 +12,7 @@ from wave import Wave_write
 
 import pyaudio
 
+from .config import LanguageConfig
 from .constants import RECORDING_FILE_NAME
 
 class Recorder:
@@ -38,6 +39,7 @@ class Recorder:
         self.is_recording = False
         self.transcriber = transcriber
         self.input_device_index = None
+        self.language_config = None
 
         p = pyaudio.PyAudio()
         api_info = p.get_host_api_info_by_index(0)
@@ -50,7 +52,7 @@ class Recorder:
         print(f"Selected device index {self.input_device_index} [{input_device_name}]")
         assert self.input_device_index is not None
 
-    def start(self):
+    def start(self, language_config: LanguageConfig):
         """
         Start the recording process in a new thread.
 
@@ -59,7 +61,7 @@ class Recorder:
         """
         if not self.is_recording:
             self.is_recording = True
-            thread = threading.Thread(target=self._recording)
+            thread = threading.Thread(target=lambda: self._recording(language_config))
             thread.start()
 
     def stop(self):
@@ -70,8 +72,9 @@ class Recorder:
         recording thread to finish its execution.
         """
         self.is_recording = False
+        self.language_config = None
 
-    def _recording(self):
+    def _recording(self, language_config: LanguageConfig):
         """
         Internal method to handle the recording process.
 
@@ -83,6 +86,9 @@ class Recorder:
         - Format: 16-bit PCM
         - Channels: 1 (mono)
         - Sample rate: 16000 Hz
+
+        Args:
+            language_config (LanguageConfig): language configuration to use for transcription.
         """
         self.is_recording = True
         frames_per_buffer = 1024
@@ -114,4 +120,4 @@ class Recorder:
         w.close()
 
         # daisy chain the transcriber analyze the wav file and type result
-        self.transcriber.transcribe(RECORDING_FILE_NAME)
+        self.transcriber.transcribe(RECORDING_FILE_NAME, language_config)

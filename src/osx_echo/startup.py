@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from osx_echo.app import App
 from osx_echo.recorder import Recorder
 from osx_echo.transcriber import Transcriber
-from osx_echo.listeners import build_key_listener
+from osx_echo.listeners import build_key_listener, build_listener_multiplexer
 from osx_echo.config import Config
 
 
@@ -35,18 +35,17 @@ def start_app():
     """
     load_dotenv()
 
-    config = Config()
+    config = Config.from_config_file("config.json")
 
-    whisper_config = config.get_whisper_config()
-    transcriber = Transcriber(**whisper_config)
+    transcriber = Transcriber(config.get_whisper_path())
 
     recorder = Recorder(transcriber, config.get_input_device_name())
-    app = App(recorder)
+    app = App(recorder, config)
 
-    key_listener = build_key_listener(app, config.get_listener_config())
-
+    listeners = [build_key_listener(app, language_config) for language_config in config.get_language_support()]
+    listener_multiplexer = build_listener_multiplexer(listeners)
     listener = keyboard.Listener(
-        on_press=key_listener.on_key_press, on_release=key_listener.on_key_release
+         on_press=listener_multiplexer.on_key_press, on_release=listener_multiplexer.on_key_release
     )
     listener.start()
 

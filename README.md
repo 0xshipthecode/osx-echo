@@ -11,11 +11,46 @@ making it much faster and only contains remnants of the original code.
 rye sync
 ```
 
-2. Copy the `env.example` file into `.env` and set the correct values.
+2. Create a `config.json` file in the root directory with your configuration settings. Here's an example structure with comments explaining each field:
 
+```json
+{
+  // Path to the Whisper.cpp main executable
+  "whisper_main_path": "/path/to/whisper.cpp/main",
+
+  // Array of supported languages and their configurations
+  "language_support": [
+    {
+      // Language code
+      "language": "en",
+      // Full name of the language
+      "language_name": "English",
+      // Path to the Whisper model for this language
+      "whisper_model_path": "/path/to/whisper.cpp/models/ggml-base.en.bin",
+      // Trigger configuration for activating this language
+      "trigger": {
+        // Type of trigger (currently supports "key_hold")
+        "type": "key_hold",
+        // Keys to hold for activating this language
+        "keys": ["cmd_l", "cmd_r"]
+      }
+    },
+    {
+      "language": "cs",
+      "language_name": "Čeština",
+      "whisper_model_path": "/path/to/whisper.cpp/models/ggml-base.bin",
+      "trigger": {
+        "type": "key_hold",
+        "keys": ["cmd_l", "alt_r"]
+      }
+    }
+  ],
+  // Name of the input audio device to use
+  "input_device_name": "MacBook Air Microphone"
+}
 ```
-cp env.example .env
-```
+
+Ensure that you update the paths and settings according to your system configuration.
 
 3. Run the app in your terminal.
 
@@ -27,11 +62,21 @@ cp env.example .env
 
 1. `Settings` -> `Security & Privacy`
 1. Click on `Accessibility`
-1. Toggle the switch for your teminal application.
+1. Toggle the switch for your terminal application.
 
 After those rights are granted the app will be able to type the transcribed text.
 
-5. When you activate recording for the first time, the app will also require you to provide permissions to record from the microphone. After you grant these permissions, you actually be ready to work.
+5. When you activate recording for the first time, the app will also require you to provide permissions to record from the microphone. After you grant these permissions, you will be ready to work.
+
+## Multiple Language Support
+
+osx-echo supports multiple languages for transcription. You can configure different languages in the `language_support` array of the `config.json` file. For each language, you can specify:
+
+- The language code and name
+- The path to the appropriate Whisper model
+- A unique key combination to trigger transcription for that language
+
+To switch between languages during use, simply use the key combination specified in the trigger configuration for each language.
 
 ## TODOs
 
