@@ -2,7 +2,6 @@ import os
 import json
 
 from pynput import keyboard
-from dotenv import load_dotenv
 
 from osx_echo.app import App
 from osx_echo.recorder import Recorder
@@ -33,8 +32,6 @@ def start_app():
     Raises:
         Potential exceptions from component initialization or configuration errors.
     """
-    load_dotenv()
-
     config = Config.from_config_file("config.json")
 
     transcriber = Transcriber(config.get_whisper_path())

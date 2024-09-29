@@ -32,8 +32,6 @@ pyobjc-framework-quartz==10.3.1
     # via pynput
     # via pyobjc-framework-applicationservices
     # via pyobjc-framework-coretext
-python-dotenv==1.0.1
-    # via osx-echo
 rumps==0.4.0
     # via osx-echo
 six==1.16.0
