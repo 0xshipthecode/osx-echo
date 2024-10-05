@@ -206,6 +206,7 @@ _key_mapping = {
     "f6": keyboard.Key.f6,
     "f10": keyboard.Key.f10,
     "f13": keyboard.Key.f13,
+    "f14": keyboard.Key.f14,
     "cmd_l": keyboard.Key.cmd_l,
     "cmd_r": keyboard.Key.cmd_r,
     "ctrl_l": keyboard.Key.ctrl_l,

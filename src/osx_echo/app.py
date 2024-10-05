@@ -8,6 +8,7 @@ import rumps
 
 from .config import Config, LanguageConfig
 
+
 class App(rumps.App):
     """
     DictationApp is the main statusbar app that governs the recording and transcribing.
@@ -28,13 +29,14 @@ class App(rumps.App):
         Args:
             recorder: An object that handles the recording functionality.
         """
-        super().__init__("osx_echo", "⏯")
+        super().__init__("osx_echo", "S")
         self.recording_in_progress = False
         self.recorder = recorder
         self.config = config
         menu_list = []
         for ls in self.config.language_support:
-            menu_list.append(rumps.MenuItem(f"Start {ls.language_name}", callback=lambda _, ls=ls: self.start_recording(ls)))
+            menu_list.append(rumps.MenuItem(f"Start {
+                             ls.language_name}", callback=lambda _, ls=ls: self.start_recording(ls)))
 
         menu_list.append(rumps.MenuItem("Stop", callback=self.stop_recording))
         self.menu = menu_list
@@ -51,7 +53,7 @@ class App(rumps.App):
         """
         if not self.recording_in_progress:
             self.recording_in_progress = True
-            self.title = "👂"
+            self.title = "R"
             self.recorder.start(language_config)
 
     def stop_recording(self, _):
@@ -65,7 +67,7 @@ class App(rumps.App):
             _: Unused parameter (required by rumps.clicked decorator).
         """
         if self.recording_in_progress:
-            self.title = "⏯"
+            self.title = "S"
             self.recording_in_progress = False
             self.recorder.stop()
 
@@ -80,4 +82,3 @@ class App(rumps.App):
             self.stop_recording(None)
         else:
             self.start_recording(language_config)
-
