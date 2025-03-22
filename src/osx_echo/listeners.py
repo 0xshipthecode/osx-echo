@@ -40,11 +40,17 @@ def build_key_listener(app, language_config):
     listener_config = language_config.trigger
     listener_type = listener_config["type"]
     if listener_type == "double_tap":
-        return _DoubleTapListener(app, _parse_key(listener_config["key"]), language_config)
+        return _DoubleTapListener(
+            app, _parse_key(listener_config["key"]), language_config
+        )
     if listener_type == "key_hold":
-        return _KeyHoldListener(app, [_parse_key(key) for key in listener_config["keys"]], language_config)
+        return _KeyHoldListener(
+            app, [_parse_key(key) for key in listener_config["keys"]], language_config
+        )
     if listener_type == "key_press":
-        return _KeyPressListener(app,  _parse_key(listener_config["key"]), language_config)
+        return _KeyPressListener(
+            app, _parse_key(listener_config["key"]), language_config
+        )
 
     raise ValueError(f"Invalid key type: {listener_type}")
 
@@ -199,7 +205,7 @@ class _KeyHoldListener:
             # Keys can easily remain hanging, thereby future key presses might becomd false positives.
             for k in self.keys_pressed:
                 self.keys_pressed[k] = False
-            self.app.stop_recording(None)
+            self.app.stop_recording()
 
 
 _key_mapping = {
