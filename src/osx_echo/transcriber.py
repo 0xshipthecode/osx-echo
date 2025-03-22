@@ -15,10 +15,14 @@ import subprocess
 import time
 import os
 import re
+import logging
 
 from pynput import keyboard
 
 from .config import LanguageConfig
+
+logger = logging.getLogger("transcriber")
+
 
 class Transcriber:
     """
@@ -50,6 +54,7 @@ class Transcriber:
         Raises:
             subprocess.CalledProcessError: If the whisper.cpp process fails.
         """
+        logger.info("Running transcriber on %s", audio_path)
         subprocess.run(
             [
                 self.whisper_main_path,
@@ -70,6 +75,7 @@ class Transcriber:
 
         with open(audio_path + ".txt", "r", encoding="utf-8") as f:
             content = f.read()
+            logger.info("Transcribed content: %s", content)
             _type_content(_clean_content(content))
 
         # cleanup the audio file and the text file
