@@ -25,14 +25,11 @@ pyobjc-framework-cocoa==10.3.1
     # via pyobjc-framework-applicationservices
     # via pyobjc-framework-coretext
     # via pyobjc-framework-quartz
-    # via rumps
 pyobjc-framework-coretext==10.3.1
     # via pyobjc-framework-applicationservices
 pyobjc-framework-quartz==10.3.1
     # via pynput
     # via pyobjc-framework-applicationservices
     # via pyobjc-framework-coretext
-rumps==0.4.0
-    # via osx-echo
 six==1.16.0
     # via pynput
