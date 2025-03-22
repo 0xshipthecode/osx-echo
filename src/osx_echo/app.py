@@ -1,21 +1,21 @@
 """
-This module contains the DictationApp class, which is the main statusbar application
-for the OSX Echo dictation tool. It provides a user interface for controlling the
-recording and transcription process.
+This module contains the App class, which is the main application
+for the OSX Echo dictation tool. It provides a control interface for the
+recording and transcription process with status indicators using pyAnyBar.
 """
 
-import rumps
+from .anybar import AnyBar
+import time
 
 from .config import Config, LanguageConfig
 
 
-class App(rumps.App):
+class App:
     """
-    DictationApp is the main statusbar app that governs the recording and transcribing.
+    App is the main class that governs the recording and transcribing.
 
-    This class extends rumps.App to create a macOS menu bar application that allows
-    users to start and stop recording for dictation. It manages the recording state
-    and interacts with a recorder object to control the actual recording process.
+    This class manages the recording state, interacts with a recorder object to control
+    the actual recording process, and uses pyAnyBar to show status indicators.
 
     Attributes:
         recording_in_progress (bool): Indicates whether recording is currently active.
@@ -24,51 +24,49 @@ class App(rumps.App):
 
     def __init__(self, recorder, config: Config):
         """
-        Initialize the DictationApp.
+        Initialize the App.
 
         Args:
             recorder: An object that handles the recording functionality.
+            config (Config): Configuration object with application settings.
         """
-        super().__init__("osx_echo", "S")
         self.recording_in_progress = False
         self.recorder = recorder
         self.config = config
-        menu_list = []
-        for ls in self.config.language_support:
-            menu_list.append(rumps.MenuItem(f"Start {
-                             ls.language_name}", callback=lambda _, ls=ls: self.start_recording(ls)))
 
-        menu_list.append(rumps.MenuItem("Stop", callback=self.stop_recording))
-        self.menu = menu_list
+        # Initialize AnyBar with default (green) indicator
+        self.anybar = AnyBar()
+        self.anybar.change("green")
+
+        # Flag to control the app's running state
+        self.is_running = True
 
     def start_recording(self, language_config: LanguageConfig):
         """
         Start the recording process.
 
-        This method is called when the user clicks the "Start" menu item.
-        It updates the app's state and starts the recorder if not already recording.
+        This method updates the app's state and starts the recorder if not already recording.
 
         Args:
-            _: Unused parameter (required by rumps.clicked decorator).
+            language_config (LanguageConfig): Language configuration to use for transcription.
         """
         if not self.recording_in_progress:
             self.recording_in_progress = True
-            self.title = "R"
+            # Change AnyBar indicator to red to show recording is in progress
+            status_color = "red" if language_config.language == "en" else "yellow"
+            self.anybar.change(status_color)
             self.recorder.start(language_config)
 
-    def stop_recording(self, _):
+    def stop_recording(self):
         """
         Stop the recording process.
 
-        This method is called when the user clicks the "Stop" menu item.
-        It updates the app's state and stops the recorder if currently recording.
-
-        Args:
-            _: Unused parameter (required by rumps.clicked decorator).
+        This method updates the app's state and stops the recorder if currently recording.
         """
         if self.recording_in_progress:
-            self.title = "S"
             self.recording_in_progress = False
+            # Change AnyBar indicator back to green to show recording stopped
+            self.anybar.change("green")
             self.recorder.stop()
 
     def toggle_recording(self, language_config: LanguageConfig):
@@ -77,8 +75,35 @@ class App(rumps.App):
 
         This method switches between starting and stopping the recording
         based on the current recording state.
+
+        Args:
+            language_config (LanguageConfig): Language configuration to use when starting recording.
         """
         if self.recording_in_progress:
-            self.stop_recording(None)
+            self.stop_recording()
         else:
             self.start_recording(language_config)
+
+    def run(self):
+        """
+        Run the application in a loop to keep it alive.
+
+        This method replaces the rumps.App.run() method and provides a simple
+        loop to keep the application running.
+        """
+        try:
+            # Simple loop to keep the app running
+            while self.is_running:
+                time.sleep(0.1)
+        except KeyboardInterrupt:
+            self.shutdown()
+
+    def shutdown(self):
+        """
+        Clean shutdown of the application.
+        """
+        if self.recording_in_progress:
+            self.stop_recording()
+        self.is_running = False
+        # Close the AnyBar connection
+        self.anybar.close()
