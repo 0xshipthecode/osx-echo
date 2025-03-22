@@ -10,10 +10,15 @@ It also interacts with a transcriber object to convert the recorded audio to tex
 import threading
 from wave import Wave_write
 
+import logging
+
 import pyaudio
 
 from .config import LanguageConfig
 from .constants import RECORDING_FILE_NAME
+
+logger = logging.getLogger("osx_echo.recorder")
+
 
 class Recorder:
     """
@@ -21,8 +26,6 @@ class Recorder:
     saving it as a wave file, and calling a transcriber to convert the audio to text.
 
     The recording process runs in a separate thread to allow for non-blocking operation.
-
-    TODO: Handle multiple audio devices and allow user to select one.
     """
 
     def __init__(self, transcriber, input_device_name):
@@ -49,7 +52,8 @@ class Recorder:
             if device_info['name'] == input_device_name:
                 self.input_device_index = device_info['index']
 
-        print(f"Selected device index {self.input_device_index} [{input_device_name}]")
+        print(f"Selected device index {
+              self.input_device_index} [{input_device_name}]")
         assert self.input_device_index is not None
 
     def start(self, language_config: LanguageConfig):
@@ -60,8 +64,10 @@ class Recorder:
         that runs the _recording method.
         """
         if not self.is_recording:
+            logger.info("Starting recording ...")
             self.is_recording = True
-            thread = threading.Thread(target=lambda: self._recording(language_config))
+            thread = threading.Thread(
+                target=lambda: self._recording(language_config))
             thread.start()
 
     def stop(self):
@@ -71,6 +77,7 @@ class Recorder:
         This method sets the recording flag to False, which will cause the
         recording thread to finish its execution.
         """
+        logger.info("Stopping recording")
         self.is_recording = False
         self.language_config = None
 
@@ -118,6 +125,8 @@ class Recorder:
         w.setframerate(16000)
         w.writeframes(audio_data)
         w.close()
+
+        logger.info("Audio written to file %s", RECORDING_FILE_NAME)
 
         # daisy chain the transcriber analyze the wav file and type result
         self.transcriber.transcribe(RECORDING_FILE_NAME, language_config)
