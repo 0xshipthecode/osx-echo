@@ -46,14 +46,16 @@ class Recorder:
 
         p = pyaudio.PyAudio()
         api_info = p.get_host_api_info_by_index(0)
-        for idx in range(api_info.get('deviceCount')):
-            device_info = (p.get_device_info_by_host_api_device_index(0, idx))
+        for idx in range(api_info.get("deviceCount")):
+            device_info = p.get_device_info_by_host_api_device_index(0, idx)
             print(f"Device {device_info["index"]}: {device_info["name"]}")
-            if device_info['name'] == input_device_name:
-                self.input_device_index = device_info['index']
+            if device_info["name"] == input_device_name:
+                self.input_device_index = device_info["index"]
 
-        print(f"Selected device index {
-              self.input_device_index} [{input_device_name}]")
+        print(
+            f"Selected device index {
+              self.input_device_index} [{input_device_name}]"
+        )
         assert self.input_device_index is not None
 
     def start(self, language_config: LanguageConfig):
@@ -66,8 +68,7 @@ class Recorder:
         if not self.is_recording:
             logger.info("Starting recording ...")
             self.is_recording = True
-            thread = threading.Thread(
-                target=lambda: self._recording(language_config))
+            thread = threading.Thread(target=lambda: self._recording(language_config))
             thread.start()
 
     def stop(self):
@@ -106,7 +107,7 @@ class Recorder:
             rate=16000,
             input=True,
             frames_per_buffer=frames_per_buffer,
-            input_device_index=self.input_device_index
+            input_device_index=self.input_device_index,
         )
 
         frames = []

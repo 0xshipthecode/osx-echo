@@ -1,0 +1,27 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Typecheck with mypy",
+			"type": "shell",
+			"command": "mypy src/osx_echo",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [
+				"$mypy"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Typecheck with mypy",
+			"type": "shell",
+			"command": "/Users/vejmelka/Projects/ai/osx-echo/.venv/bin/mypy src/osx_echo",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [
+				"$mypy"
+			],
+			"group": "test"
+		}
+	]
+}

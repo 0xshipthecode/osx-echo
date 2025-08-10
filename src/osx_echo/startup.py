@@ -42,22 +42,25 @@ def start_app():
     app = App(recorder, config)
 
     # Set up keyboard listeners for all configured languages
-    listeners = [build_key_listener(app, language_config)
-                 for language_config in config.get_language_support()]
+    listeners = [
+        build_key_listener(app, language_config)
+        for language_config in config.get_language_support()
+    ]
     listener_multiplexer = build_listener_multiplexer(listeners)
     listener = keyboard.Listener(
-        on_press=listener_multiplexer.on_key_press, on_release=listener_multiplexer.on_key_release
+        on_press=listener_multiplexer.on_key_press,
+        on_release=listener_multiplexer.on_key_release,
     )
     listener.start()
-    
+
     # Set up signal handling for graceful shutdown
     def signal_handler(sig, frame):
         logging.info("Shutting down app gracefully...")
         app.shutdown()
         listener.stop()
-        
+
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
-    
+
     # Run the app (this will block until app.is_running is False)
     app.run()
