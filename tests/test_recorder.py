@@ -236,15 +236,17 @@ class TestRecordingMethod:
         mock_language_config = Mock(spec=LanguageConfig)
         
         # Create recorder with mocked initialization
-        with patch('osx_echo.recorder.pyaudio.PyAudio'):
-            recorder = Mock(spec=Recorder)
-            recorder.is_recording = True
-            recorder.input_device_index = 0
-            recorder.transcriber = mock_transcriber
-            
-            # Import the actual _recording method
-            from osx_echo.recorder import Recorder as RealRecorder
-            recorder._recording = RealRecorder._recording.__get__(recorder, Recorder)
+        # Don't use nested patch - mock_pyaudio_stream already patches PyAudio
+        recorder = Mock(spec=Recorder)
+        recorder._recording_event = Mock()
+        recorder._recording_event.is_set.return_value = True
+        recorder._recording_event.clear = Mock()
+        recorder.input_device_index = 0
+        recorder.transcriber = mock_transcriber
+        
+        # Import the actual _recording method
+        from osx_echo.recorder import Recorder as RealRecorder
+        recorder._recording = RealRecorder._recording.__get__(recorder, Recorder)
         
         # Mock audio data
         audio_data = b'test_audio_data'
@@ -256,7 +258,7 @@ class TestRecordingMethod:
             nonlocal iteration_count
             iteration_count += 1
             if iteration_count >= 2:
-                recorder.is_recording = False
+                recorder._recording_event.is_set.return_value = False
             return audio_data
         
         mock_pyaudio_stream['stream'].read.side_effect = stop_after_iterations
@@ -288,14 +290,16 @@ class TestRecordingMethod:
         mock_language_config = Mock(spec=LanguageConfig)
         
         # Create recorder
-        with patch('osx_echo.recorder.pyaudio.PyAudio'):
-            recorder = Mock(spec=Recorder)
-            recorder.is_recording = True
-            recorder.input_device_index = 0
-            recorder.transcriber = mock_transcriber
-            
-            from osx_echo.recorder import Recorder as RealRecorder
-            recorder._recording = RealRecorder._recording.__get__(recorder, Recorder)
+        # Don't use nested patch - mock_pyaudio_stream already patches PyAudio
+        recorder = Mock(spec=Recorder)
+        recorder._recording_event = Mock()
+        recorder._recording_event.is_set.return_value = True
+        recorder._recording_event.clear = Mock()
+        recorder.input_device_index = 0
+        recorder.transcriber = mock_transcriber
+        
+        from osx_echo.recorder import Recorder as RealRecorder
+        recorder._recording = RealRecorder._recording.__get__(recorder, Recorder)
         
         # Mock stream open to fail
         mock_pyaudio_stream['pyaudio'].open.side_effect = Exception("Device not available")
@@ -313,14 +317,16 @@ class TestRecordingMethod:
         mock_transcriber = Mock()
         mock_language_config = Mock(spec=LanguageConfig)
         
-        with patch('osx_echo.recorder.pyaudio.PyAudio'):
-            recorder = Mock(spec=Recorder)
-            recorder.is_recording = True
-            recorder.input_device_index = 0
-            recorder.transcriber = mock_transcriber
-            
-            from osx_echo.recorder import Recorder as RealRecorder
-            recorder._recording = RealRecorder._recording.__get__(recorder, Recorder)
+        # Don't use nested patch - mock_pyaudio_stream already patches PyAudio
+        recorder = Mock(spec=Recorder)
+        recorder._recording_event = Mock()
+        recorder._recording_event.is_set.return_value = True
+        recorder._recording_event.clear = Mock()
+        recorder.input_device_index = 0
+        recorder.transcriber = mock_transcriber
+        
+        from osx_echo.recorder import Recorder as RealRecorder
+        recorder._recording = RealRecorder._recording.__get__(recorder, Recorder)
         
         # Mock stream read to fail once, then succeed, then stop
         call_count = 0
@@ -332,7 +338,7 @@ class TestRecordingMethod:
             elif call_count == 2:
                 return b'good_data'
             else:
-                recorder.is_recording = False
+                recorder._recording_event.is_set.return_value = False
                 return b'final_data'
         
         mock_pyaudio_stream['stream'].read.side_effect = read_with_error
@@ -353,24 +359,26 @@ class TestRecordingMethod:
         mock_transcriber = Mock()
         mock_language_config = Mock(spec=LanguageConfig)
         
-        with patch('osx_echo.recorder.pyaudio.PyAudio'):
-            recorder = Mock(spec=Recorder)
-            recorder.is_recording = True
-            recorder.input_device_index = 0
-            recorder.transcriber = mock_transcriber
-            
-            from osx_echo.recorder import Recorder as RealRecorder
-            recorder._recording = RealRecorder._recording.__get__(recorder, Recorder)
+        # Create a real-ish recorder object
+        recorder = Mock(spec=Recorder)
+        recorder._recording_event = Mock()
+        recorder._recording_event.is_set.return_value = True
+        recorder._recording_event.clear = Mock()
+        recorder.input_device_index = 0
+        recorder.transcriber = mock_transcriber
         
-        # Record one frame then stop
-        call_count = [0]
-        def read_and_stop(*args):
-            call_count[0] += 1
-            if call_count[0] >= 2:
-                recorder.is_recording = False
+        from osx_echo.recorder import Recorder as RealRecorder
+        recorder._recording = RealRecorder._recording.__get__(recorder, Recorder)
+        
+        # Make the recording stop after getting some data
+        frames_read = [0]
+        def read_and_stop(*args, **kwargs):
+            frames_read[0] += 1
+            if frames_read[0] >= 2:
+                recorder._recording_event.is_set.return_value = False
             return b'audio_data'
         
-        mock_pyaudio_stream['stream'].read.side_effect = read_and_stop
+        mock_pyaudio_stream['stream'].read = read_and_stop
         
         # Mock wave file write to fail
         mock_pyaudio_stream['wave_write_class'].side_effect = IOError("Disk full")
@@ -391,21 +399,23 @@ class TestRecordingMethod:
         mock_transcriber.transcribe.side_effect = Exception("Whisper failed")
         mock_language_config = Mock(spec=LanguageConfig)
         
-        with patch('osx_echo.recorder.pyaudio.PyAudio'):
-            recorder = Mock(spec=Recorder)
-            recorder.is_recording = True
-            recorder.input_device_index = 0
-            recorder.transcriber = mock_transcriber
-            
-            from osx_echo.recorder import Recorder as RealRecorder
-            recorder._recording = RealRecorder._recording.__get__(recorder, Recorder)
+        # Don't use nested patch - mock_pyaudio_stream already patches PyAudio
+        recorder = Mock(spec=Recorder)
+        recorder._recording_event = Mock()
+        recorder._recording_event.is_set.return_value = True
+        recorder._recording_event.clear = Mock()
+        recorder.input_device_index = 0
+        recorder.transcriber = mock_transcriber
+        
+        from osx_echo.recorder import Recorder as RealRecorder
+        recorder._recording = RealRecorder._recording.__get__(recorder, Recorder)
         
         # Record one frame then stop
         call_count = [0]
-        def read_and_stop(*args):
+        def read_and_stop(*args, **kwargs):  # Accept kwargs for exception_on_overflow
             call_count[0] += 1
             if call_count[0] >= 2:
-                recorder.is_recording = False
+                recorder._recording_event.is_set.return_value = False
             return b'audio_data'
         
         mock_pyaudio_stream['stream'].read.side_effect = read_and_stop
@@ -425,14 +435,16 @@ class TestRecordingMethod:
         mock_transcriber = Mock()
         mock_language_config = Mock(spec=LanguageConfig)
         
-        with patch('osx_echo.recorder.pyaudio.PyAudio'):
-            recorder = Mock(spec=Recorder)
-            recorder.is_recording = False  # Stop immediately
-            recorder.input_device_index = 0
-            recorder.transcriber = mock_transcriber
-            
-            from osx_echo.recorder import Recorder as RealRecorder
-            recorder._recording = RealRecorder._recording.__get__(recorder, Recorder)
+        # Don't use nested patch - mock_pyaudio_stream already patches PyAudio
+        recorder = Mock(spec=Recorder)
+        recorder._recording_event = Mock()
+        recorder._recording_event.is_set.return_value = False  # Stop immediately
+        recorder._recording_event.clear = Mock()
+        recorder.input_device_index = 0
+        recorder.transcriber = mock_transcriber
+        
+        from osx_echo.recorder import Recorder as RealRecorder
+        recorder._recording = RealRecorder._recording.__get__(recorder, Recorder)
         
         # Run recording - should handle gracefully
         recorder._recording(mock_language_config)
@@ -452,7 +464,9 @@ class TestRecordingWrapper:
         """Test that wrapper catches and logs exceptions."""
         # Create mock recorder
         recorder = Mock(spec=Recorder)
-        recorder.is_recording = True
+        recorder._recording_event = Mock()
+        recorder._recording_event.is_set.return_value = True
+        recorder._recording_event.clear = Mock()
         recorder._recording = Mock(side_effect=Exception("Recording failed"))
         
         from osx_echo.recorder import Recorder as RealRecorder
@@ -465,13 +479,15 @@ class TestRecordingWrapper:
         
         # Should log error and reset flag
         assert "Recording thread encountered an error" in caplog.text
-        assert not recorder.is_recording
+        recorder._recording_event.clear.assert_called()
     
     def test_wrapper_ensures_flag_reset(self, mocker):
         """Test that wrapper always resets is_recording flag."""
         # Create mock recorder
         recorder = Mock(spec=Recorder)
-        recorder.is_recording = True
+        recorder._recording_event = Mock()
+        recorder._recording_event.is_set.return_value = True
+        recorder._recording_event.clear = Mock()
         recorder._recording = Mock()
         
         from osx_echo.recorder import Recorder as RealRecorder
@@ -483,4 +499,4 @@ class TestRecordingWrapper:
         recorder._recording_wrapper(mock_language_config)
         
         # Flag should be reset even on success
-        assert not recorder.is_recording
+        recorder._recording_event.clear.assert_called()

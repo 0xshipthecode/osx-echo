@@ -43,7 +43,7 @@ class Recorder:
         Note:
             This method also prints information about available audio devices.
         """
-        self.is_recording = False
+        self._recording_event = threading.Event()  # Thread-safe recording state
         self.transcriber = transcriber
         self.input_device_index = None
         self.language_config = None
@@ -51,6 +51,29 @@ class Recorder:
         
         # Find and set the input device
         self.input_device_index = self._find_input_device(input_device_name)
+
+    @property
+    def is_recording(self):
+        """
+        Check if recording is currently in progress.
+        
+        Returns:
+            bool: True if recording is active, False otherwise.
+        """
+        return self._recording_event.is_set()
+    
+    @is_recording.setter
+    def is_recording(self, value):
+        """
+        Set the recording state in a thread-safe manner.
+        
+        Args:
+            value (bool): True to start recording state, False to stop.
+        """
+        if value:
+            self._recording_event.set()
+        else:
+            self._recording_event.clear()
         
     def _find_input_device(self, device_name):
         """
@@ -165,13 +188,13 @@ class Recorder:
         Raises:
             RuntimeError: If a recording is already in progress or thread creation fails.
         """
-        if self.is_recording:
+        if self._recording_event.is_set():
             logger.warning("Recording already in progress")
             return
             
         try:
             logger.info("Starting recording...")
-            self.is_recording = True
+            self._recording_event.set()  # Set the event to signal recording start
             self.language_config = language_config
             
             self._recording_thread = threading.Thread(
@@ -182,7 +205,7 @@ class Recorder:
             self._recording_thread.start()
             
         except Exception as e:
-            self.is_recording = False
+            self._recording_event.clear()  # Clear the event on error
             self.language_config = None
             logger.error(f"Failed to start recording: {e}")
             raise RuntimeError(f"Could not start recording: {e}") from e
@@ -197,12 +220,12 @@ class Recorder:
         Returns:
             bool: True if recording was stopped, False if no recording was in progress.
         """
-        if not self.is_recording:
+        if not self._recording_event.is_set():
             logger.info("No recording in progress to stop")
             return False
             
         logger.info("Stopping recording")
-        self.is_recording = False
+        self._recording_event.clear()  # Clear the event to signal stop
         
         # Wait for the recording thread to finish with a timeout
         if self._recording_thread and self._recording_thread.is_alive():
@@ -228,16 +251,16 @@ class Recorder:
             self._recording(language_config)
         except Exception as e:
             logger.error(f"Recording thread encountered an error: {e}", exc_info=True)
-            self.is_recording = False
+            self._recording_event.clear()
         finally:
-            self.is_recording = False
+            self._recording_event.clear()  # Always clear when recording ends
 
     def _recording(self, language_config: LanguageConfig):
         """
         Internal method to handle the recording process.
 
-        This method runs in a separate thread and captures audio until `is_recording`
-        is set to False. It then saves the recorded audio as a wave file and
+        This method runs in a separate thread and captures audio until the recording
+        event is cleared. It then saves the recorded audio as a wave file and
         initiates the transcription process.
 
         The audio is recorded with the following parameters:
@@ -281,7 +304,7 @@ class Recorder:
                 raise RuntimeError(f"Could not open audio stream on device {self.input_device_index}: {e}") from e
             
             # Record audio
-            while self.is_recording:
+            while self._recording_event.is_set():
                 try:
                     data = stream.read(frames_per_buffer, exception_on_overflow=False)
                     frames.append(data)
