@@ -1,18 +1,23 @@
 # OSX Echo - Code Improvement Plan
 
 ## Recently Completed (Session 2025-08-12)
+
 - ✅ **Error Handling in Recorder**: Added comprehensive error handling with try/except blocks and proper resource cleanup
 - ✅ **Error Handling in Transcriber**: Added subprocess error handling, timeout support, and file cleanup in finally blocks
 - ✅ **Resource Management**: Implemented try/finally blocks for PyAudio streams and file operations ensuring proper cleanup
-- ✅ **Code Refactoring**: Reduced nesting depth in Recorder.__init__ by extracting device discovery logic
+- ✅ **Code Refactoring**: Reduced nesting depth in Recorder.**init** by extracting device discovery logic
 - ✅ **Unit Testing**: Created comprehensive test suites for both Recorder (17 tests) and Transcriber (21 tests) classes
 - ✅ **Testing Infrastructure**: Set up pytest with pytest-mock, pytest-cov, and pytest-timeout
 - ✅ **Test Performance**: Fixed hanging tests by correcting mock setup issues
 - ✅ **Thread-Safe State Management**: Replaced boolean `is_recording` flag with `threading.Event` for thread-safe state management
+- ✅ **Configuration Validation**: Added comprehensive validation for whisper models, language codes, and trigger keys
+- ✅ **Device Validation**: Implemented audio device validation with automatic fallback to available microphone
+- ✅ **Command-Line Arguments**: Added support for custom config paths, --list-devices, and --validate-config options
 
 ## Priority 1: Critical Issues (Safety & Reliability)
 
 ### 1.1 Error Handling & Recovery
+
 - [x] Add try/except blocks around PyAudio operations in `Recorder._recording()`
   - Handle device initialization failures
   - Handle stream read errors
@@ -25,6 +30,7 @@
   - Clean up partial transcription files
 
 ### 1.2 Resource Management
+
 - [x] Add context managers for audio streams
   - Wrap PyAudio stream operations in try/finally
   - Ensure proper stream closure
@@ -38,11 +44,12 @@
 ## Priority 2: Configuration & Validation
 
 ### 2.1 Configuration Validation
-- [ ] Add comprehensive config validation in `Config.from_config_file()`
+
+- [x] Add comprehensive config validation in `Config.from_config_file()`
   - Verify all whisper model files exist
   - Validate language codes
-  - Check keyboard shortcuts for conflicts
-- [ ] Implement device validation
+  - Allow user to specify config file as command line argument
+- [x] Implement device validation
   - List available audio devices
   - Verify configured device exists
   - Fallback to default device if needed
@@ -51,6 +58,7 @@
   - Validate on load with helpful error messages
 
 ### 2.2 Configuration Enhancements
+
 - [ ] Make audio parameters configurable
   - Sample rate (currently hardcoded to 16000)
   - Channels (currently hardcoded to mono)
@@ -62,14 +70,16 @@
 ## Priority 3: Architecture Improvements
 
 ### 3.1 Dependency Injection
+
 - [x] Refactor component initialization
-  - [x] Refactor Recorder.__init__ to reduce nesting depth
-  - [x] Extract device discovery into separate methods (_find_input_device, _search_for_device, _get_available_devices)
+  - [x] Refactor Recorder.**init** to reduce nesting depth
+  - [x] Extract device discovery into separate methods (\_find_input_device, \_search_for_device, \_get_available_devices)
   - Create factory functions for dependencies
   - Use dependency injection for better testability
   - Separate concerns between components
 
 ### 3.2 Async Processing
+
 - [ ] Make transcription asynchronous
   - Run whisper in background thread/process
   - Add progress callbacks
@@ -80,6 +90,7 @@
   - Show queue status
 
 ### 3.3 Abstraction Layers
+
 - [ ] Create audio backend abstraction
   - Interface for audio recording
   - PyAudio implementation
@@ -92,6 +103,7 @@
 ## Priority 4: User Experience
 
 ### 4.1 Feedback & Notifications
+
 - [ ] Add user notifications for errors
   - System notifications for failures
   - Audio feedback for start/stop
@@ -102,6 +114,7 @@
   - Queue status visibility
 
 ### 4.2 Robustness Features
+
 - [ ] Add automatic retry logic
   - Retry failed transcriptions
   - Reconnect lost audio devices
@@ -114,28 +127,32 @@
 ## Priority 5: Code Quality
 
 ### 5.1 Type Safety
+
 - [ ] Add complete type hints
   - All function parameters and returns
   - Use typing module features (Optional, Union, etc.)
   - Add mypy configuration
 
 ### 5.2 Testing
+
 - [x] Create unit tests
-  - Test configuration loading
+  - [x] Test configuration loading and validation (19 tests for Config classes)
   - [x] Test audio recording logic (comprehensive tests for Recorder class)
-  - Test transcription pipeline
+  - [x] Test transcription pipeline (comprehensive tests for Transcriber class)
 - [ ] Add integration tests
   - End-to-end recording/transcription
   - Keyboard listener behavior
   - Error recovery scenarios
 
 ### 5.3 Documentation
+
 - [ ] Add docstrings to all classes and methods
 - [ ] Create architecture documentation
 - [ ] Add inline comments for complex logic
 - [ ] Create user documentation
 
 ### 5.4 Logging Improvements
+
 - [ ] Standardize logging across all modules
   - Consistent log levels
   - Structured logging format
@@ -148,21 +165,25 @@
 ## Implementation Order
 
 1. **Phase 1 - Safety First** (Week 1)
+
    - Error handling in recorder.py
    - Resource management with context managers
    - Thread-safe state management
 
 2. **Phase 2 - Reliability** (Week 2)
+
    - Configuration validation
    - Device verification
    - File cleanup guarantees
 
 3. **Phase 3 - Architecture** (Week 3-4)
+
    - Async transcription
    - Dependency injection
    - Backend abstractions
 
 4. **Phase 4 - Polish** (Week 5)
+
    - User feedback improvements
    - Complete type hints
    - Comprehensive testing
@@ -179,3 +200,4 @@
 - Update documentation as we go
 - Consider backward compatibility for config changes
 - Performance impact should be measured for each change
+
