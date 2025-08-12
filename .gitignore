@@ -14,5 +14,7 @@ wheels/
 .env
 config.json
 
+.serena
+
 # recordings
 recording.wav*
