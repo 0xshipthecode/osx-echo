@@ -37,9 +37,7 @@
 - [x] Implement thread-safe flag management
   - Use threading.Event instead of boolean for `is_recording`
   - Add proper synchronization for shared state
-- [ ] Add memory management for audio buffers
-  - Implement streaming to disk for long recordings
-  - Add configurable buffer size limits
+
 
 ## Priority 2: Configuration & Validation
 
@@ -53,16 +51,11 @@
   - List available audio devices
   - Verify configured device exists
   - Fallback to default device if needed
-- [ ] Add config schema validation
-  - Create JSON schema for config.json
-  - Validate on load with helpful error messages
+
 
 ### 2.2 Configuration Enhancements
 
-- [ ] Make audio parameters configurable
-  - Sample rate (currently hardcoded to 16000)
-  - Channels (currently hardcoded to mono)
-  - Buffer size (currently hardcoded to 1024)
+
 - [ ] Add runtime configuration reload
   - Watch config file for changes
   - Allow hot-reload of non-critical settings
@@ -78,27 +71,9 @@
   - Use dependency injection for better testability
   - Separate concerns between components
 
-### 3.2 Async Processing
 
-- [ ] Make transcription asynchronous
-  - Run whisper in background thread/process
-  - Add progress callbacks
-  - Implement cancellation support
-- [ ] Add task queue for transcriptions
-  - Queue multiple recordings
-  - Process in background
-  - Show queue status
 
-### 3.3 Abstraction Layers
 
-- [ ] Create audio backend abstraction
-  - Interface for audio recording
-  - PyAudio implementation
-  - Mock implementation for testing
-- [ ] Abstract transcription backend
-  - Interface for speech-to-text
-  - Whisper.cpp implementation
-  - Potential for alternative engines
 
 ## Priority 4: User Experience
 
@@ -128,10 +103,10 @@
 
 ### 5.1 Type Safety
 
-- [ ] Add complete type hints
-  - All function parameters and returns
-  - Use typing module features (Optional, Union, etc.)
-  - Add mypy configuration
+- [x] Add complete type hints
+  - [x] Install type stubs for external libraries (types-pynput, types-pyaudio)
+  - [x] Fix type errors in config.py for PyAudio API calls
+  - [x] Mypy now passes with no errors
 
 ### 5.2 Testing
 

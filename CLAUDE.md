@@ -1,0 +1,3 @@
+- use uv run to launch executables
+- use mypy, ruff and black for type hinting, linting and formatting
+- always read @TODO.md and @SPEC.md first to get project context

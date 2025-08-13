@@ -35,4 +35,6 @@ dev = [
     "pytest-cov>=6.2.1",
     "pytest-mock>=3.14.1",
     "ruff>=0.12.8",
+    "types-pynput>=1.8.1.20250809",
+    "types-pyaudio>=0.2.16.20250801",
 ]

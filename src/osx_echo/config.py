@@ -345,14 +345,14 @@ class Config:
         try:
             p = pyaudio.PyAudio()
             api_info = p.get_host_api_info_by_index(0)
-            device_count = api_info.get("deviceCount", 0)
+            device_count = int(api_info.get("deviceCount", 0))
 
             for idx in range(device_count):
                 try:
                     device_info = p.get_device_info_by_host_api_device_index(0, idx)
                     # Only include input devices
-                    if device_info.get("maxInputChannels", 0) > 0:
-                        devices.append(device_info.get("name", "Unknown"))
+                    if int(device_info.get("maxInputChannels", 0)) > 0:
+                        devices.append(str(device_info.get("name", "Unknown")))
                 except Exception as e:
                     logger.debug(f"Error getting device info for index {idx}: {e}")
                     continue

@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-**osx-echo** is a macOS native dictation application that provides a fast and efficient way to transcribe spoken words into text. It leverages the power of `whisper.cpp` for local, high-performance speech-to-text conversion, offering an alternative to cloud-based dictation services. The application is designed to be lightweight and configurable, allowing users to define their own keyboard shortcuts and language models.
+**osx-echo** is a macOS native dictation application that provides a fast and efficient way to transcribe spoken words into text in soft real-time. It leverages the power of `whisper.cpp` for local, high-performance speech-to-text conversion, offering an alternative to cloud-based dictation services. The application is designed to be lightweight and configurable, allowing users to define their own keyboard shortcuts and language models. The application is intended to be used to transcribe short utterances and type them out on the keyboard into any text field that is currently in focus.
 
 ## 2. User Services
 
