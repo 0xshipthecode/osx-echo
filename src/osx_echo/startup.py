@@ -214,7 +214,13 @@ def start_app():
     transcriber = Transcriber(config.get_whisper_path())
 
     recorder = Recorder(transcriber, config.get_input_device_name())
-    app = App(recorder, config)
+
+    # Create AnyBar status indicator explicitly for better testability
+    from osx_echo.anybar import AnyBar
+
+    anybar = AnyBar()
+
+    app = App(recorder, config, status_indicator=anybar)
 
     # Set up keyboard listeners for all configured languages
     listeners = [

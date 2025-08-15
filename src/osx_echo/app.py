@@ -22,21 +22,24 @@ class App:
         recorder: An object responsible for handling the actual recording functionality.
     """
 
-    def __init__(self, recorder, config: Config):
+    def __init__(self, recorder, config: Config, status_indicator=None):
         """
         Initialize the App.
 
         Args:
             recorder: An object that handles the recording functionality.
             config (Config): Configuration object with application settings.
+            status_indicator: Optional status indicator instance (defaults to AnyBar).
         """
         self.recording_in_progress = False
         self.recorder = recorder
         self.config = config
 
-        # Initialize AnyBar with default (green) indicator
-        self.anybar = AnyBar()
-        self.anybar.change("green")
+        # Use provided status indicator or default to AnyBar
+        self.status_indicator = (
+            status_indicator if status_indicator is not None else AnyBar()
+        )
+        self.status_indicator.change("green")
 
         # Flag to control the app's running state
         self.is_running = True
@@ -54,7 +57,7 @@ class App:
             self.recording_in_progress = True
             # Change AnyBar indicator to red to show recording is in progress
             status_color = "red" if language_config.language == "en" else "yellow"
-            self.anybar.change(status_color)
+            self.status_indicator.change(status_color)
             self.recorder.start(language_config)
 
     def stop_recording(self):
@@ -66,7 +69,7 @@ class App:
         if self.recording_in_progress:
             self.recording_in_progress = False
             # Change AnyBar indicator back to green to show recording stopped
-            self.anybar.change("green")
+            self.status_indicator.change("green")
             self.recorder.stop()
 
     def toggle_recording(self, language_config: LanguageConfig):
@@ -106,4 +109,4 @@ class App:
             self.stop_recording()
         self.is_running = False
         # Close the AnyBar connection
-        self.anybar.close()
+        self.status_indicator.close()
