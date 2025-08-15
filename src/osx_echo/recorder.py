@@ -8,6 +8,7 @@ It also interacts with a transcriber object to convert the recorded audio to tex
 """
 
 import threading
+import time
 from wave import Wave_write
 
 import logging
@@ -16,8 +17,10 @@ import pyaudio
 
 from .config import LanguageConfig
 from .constants import RECORDING_FILE_NAME
+from .logging_config import get_performance_logger
 
 logger = logging.getLogger("osx_echo.recorder")
+perf_logger = get_performance_logger(__name__)
 
 
 class Recorder:
@@ -281,6 +284,7 @@ class Recorder:
         p = None
         stream = None
         frames = []
+        recording_start_time = time.perf_counter()
 
         try:
             # Initialize PyAudio
@@ -315,7 +319,15 @@ class Recorder:
                     # Continue recording despite read errors
                     continue
 
-            logger.info(f"Recording stopped, captured {len(frames)} frames")
+            # Calculate recording duration
+            recording_duration_ms = (time.perf_counter() - recording_start_time) * 1000
+
+            perf_logger.log_metric(
+                f"Recording stopped, captured {len(frames)} frames",
+                duration_ms=recording_duration_ms,
+                frames_count=len(frames),
+                language=language_config.language,
+            )
 
         finally:
             # Clean up audio resources
@@ -341,27 +353,43 @@ class Recorder:
 
         # Save audio to file with error handling
         wave_file = None
-        try:
-            audio_data = b"".join(frames)
-            wave_file = Wave_write(RECORDING_FILE_NAME)
-            wave_file.setnchannels(channels)
-            wave_file.setsampwidth(p.get_sample_size(audio_format))
-            wave_file.setframerate(sample_rate)
-            wave_file.writeframes(audio_data)
-            logger.info(
-                f"Audio written to file {RECORDING_FILE_NAME}, size: {len(audio_data)} bytes"
-            )
+        with perf_logger.track_operation(
+            "save_audio_file",
+            language=language_config.language,
+        ) as tracker:
+            try:
+                audio_data = b"".join(frames)
+                wave_file = Wave_write(RECORDING_FILE_NAME)
+                wave_file.setnchannels(channels)
+                wave_file.setsampwidth(p.get_sample_size(audio_format))
+                wave_file.setframerate(sample_rate)
+                wave_file.writeframes(audio_data)
 
-        except Exception as e:
-            logger.error(f"Failed to write audio file: {e}")
-            raise IOError(f"Could not save audio to {RECORDING_FILE_NAME}: {e}") from e
+                # Track metrics
+                tracker.set("audio_size_bytes", len(audio_data))
+                tracker.set("frames_count", len(frames))
+                tracker.set("sample_rate", sample_rate)
 
-        finally:
-            if wave_file is not None:
-                try:
-                    wave_file.close()
-                except Exception as e:
-                    logger.error(f"Error closing wave file: {e}")
+                # Calculate audio duration in seconds
+                audio_duration_s = len(frames) * frames_per_buffer / sample_rate
+                tracker.set("audio_duration_s", audio_duration_s)
+
+                logger.info(
+                    f"Audio written to file {RECORDING_FILE_NAME}, size: {len(audio_data)} bytes, duration: {audio_duration_s:.2f}s"
+                )
+
+            except Exception as e:
+                logger.error(f"Failed to write audio file: {e}")
+                raise IOError(
+                    f"Could not save audio to {RECORDING_FILE_NAME}: {e}"
+                ) from e
+
+            finally:
+                if wave_file is not None:
+                    try:
+                        wave_file.close()
+                    except Exception as e:
+                        logger.error(f"Error closing wave file: {e}")
 
         # Transcribe the audio with error handling
         try:

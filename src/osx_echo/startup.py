@@ -11,10 +11,7 @@ from osx_echo.recorder import Recorder
 from osx_echo.transcriber import Transcriber
 from osx_echo.listeners import build_key_listener, build_listener_multiplexer
 from osx_echo.config import Config
-
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+from osx_echo.logging_config import setup_logging
 
 
 def parse_arguments():
@@ -57,6 +54,26 @@ Examples:
 
     parser.add_argument(
         "-v", "--verbose", action="store_true", help="Enable verbose logging"
+    )
+
+    parser.add_argument(
+        "--log-structured",
+        action="store_true",
+        help="Use structured JSON logging format",
+    )
+
+    parser.add_argument(
+        "--log-file",
+        type=str,
+        help="Log output to file (in addition to console)",
+    )
+
+    parser.add_argument(
+        "--log-level",
+        type=str,
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        default="INFO",
+        help="Set logging level (default: INFO)",
     )
 
     return parser.parse_args()
@@ -184,9 +201,15 @@ def start_app():
     # Parse command-line arguments
     args = parse_arguments()
 
-    # Set logging level
-    if args.verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
+    # Configure logging with new system
+    log_level = "DEBUG" if args.verbose else args.log_level
+    setup_logging(
+        level=log_level,
+        structured=args.log_structured,
+        log_file=args.log_file,
+    )
+
+    logger = logging.getLogger(__name__)
 
     # Handle list devices mode
     if args.list_devices:
@@ -200,15 +223,15 @@ def start_app():
 
     # Load and validate configuration
     try:
-        logging.info(f"Loading configuration from: {args.config}")
+        logger.info(f"Loading configuration from: {args.config}")
         config = Config.from_config_file(args.config)
     except (FileNotFoundError, ValueError) as e:
-        logging.error(f"Failed to load configuration: {e}")
-        logging.error("Use --list-devices to see available audio devices")
-        logging.error("Use --validate-config to check your configuration file")
+        logger.error(f"Failed to load configuration: {e}")
+        logger.error("Use --list-devices to see available audio devices")
+        logger.error("Use --validate-config to check your configuration file")
         sys.exit(1)
     except Exception as e:
-        logging.error(f"Unexpected error loading configuration: {e}")
+        logger.error(f"Unexpected error loading configuration: {e}")
         sys.exit(1)
 
     transcriber = Transcriber(config.get_whisper_path())
@@ -236,7 +259,7 @@ def start_app():
 
     # Set up signal handling for graceful shutdown
     def signal_handler(sig, frame):
-        logging.info("Shutting down app gracefully...")
+        logger.info("Shutting down app gracefully...")
         app.shutdown()
         listener.stop()
 

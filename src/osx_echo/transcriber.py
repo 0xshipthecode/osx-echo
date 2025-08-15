@@ -20,8 +20,10 @@ import logging
 from pynput import keyboard
 
 from .config import LanguageConfig
+from .logging_config import get_performance_logger
 
 logger = logging.getLogger("transcriber")
+perf_logger = get_performance_logger(__name__)
 
 
 class Transcriber:
@@ -79,45 +81,56 @@ class Transcriber:
         if not os.path.exists(audio_path):
             raise FileNotFoundError(f"Audio file not found: {audio_path}")
 
+        # Get audio file size for metrics
+        audio_size = os.path.getsize(audio_path)
+
         logger.info(f"Starting transcription of {audio_path}")
 
         output_path = audio_path + ".txt"
         transcribed_text = None
 
-        try:
-            # Run whisper.cpp with error handling
-            self._run_whisper(audio_path, output_path, language_support)
+        with perf_logger.track_operation(
+            "transcription",
+            language=language_support.language,
+            audio_size_bytes=audio_size,
+        ) as tracker:
+            try:
+                # Run whisper.cpp with error handling
+                self._run_whisper(audio_path, output_path, language_support)
 
-            # Read and process the transcribed text
-            transcribed_text = self._read_transcription(output_path)
+                # Read and process the transcribed text
+                transcribed_text = self._read_transcription(output_path)
 
-            # Type the content
-            if transcribed_text:
-                self._type_transcribed_text(transcribed_text)
-            else:
-                logger.warning("No text to type from transcription")
+                # Track transcription metrics
+                if transcribed_text:
+                    tracker.set("transcribed_length", len(transcribed_text))
+                    tracker.set("words_count", len(transcribed_text.split()))
+                    self._type_transcribed_text(transcribed_text)
+                else:
+                    logger.warning("No text to type from transcription")
+                    tracker.set("transcribed_length", 0)
 
-            return transcribed_text
+                return transcribed_text
 
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Whisper.cpp failed with exit code {e.returncode}")
-            raise RuntimeError(
-                f"Transcription failed: whisper.cpp exited with code {e.returncode}"
-            ) from e
+            except subprocess.CalledProcessError as e:
+                logger.error(f"Whisper.cpp failed with exit code {e.returncode}")
+                raise RuntimeError(
+                    f"Transcription failed: whisper.cpp exited with code {e.returncode}"
+                ) from e
 
-        except subprocess.TimeoutExpired as e:
-            logger.error(f"Whisper.cpp timed out after {e.timeout} seconds")
-            raise RuntimeError(
-                f"Transcription timed out after {e.timeout} seconds"
-            ) from e
+            except subprocess.TimeoutExpired as e:
+                logger.error(f"Whisper.cpp timed out after {e.timeout} seconds")
+                raise RuntimeError(
+                    f"Transcription timed out after {e.timeout} seconds"
+                ) from e
 
-        except Exception as e:
-            logger.error(f"Unexpected error during transcription: {e}")
-            raise
+            except Exception as e:
+                logger.error(f"Unexpected error during transcription: {e}")
+                raise
 
-        finally:
-            # Clean up files even if transcription fails
-            self._cleanup_files(audio_path, output_path)
+            finally:
+                # Clean up files even if transcription fails
+                self._cleanup_files(audio_path, output_path)
 
     def _run_whisper(
         self, audio_path: str, output_path: str, language_support: LanguageConfig
@@ -156,23 +169,29 @@ class Transcriber:
 
         logger.debug(f"Running whisper command: {' '.join(cmd)}")
 
-        try:
-            # Run with a timeout of 60 seconds
-            result = subprocess.run(
-                cmd, check=True, capture_output=True, text=True, timeout=60
-            )
+        # Track whisper.cpp execution time
+        with perf_logger.track_operation(
+            "whisper_cpp_execution",
+            language=language_support.language,
+            model=os.path.basename(language_support.whisper_model_path),
+        ):
+            try:
+                # Run with a timeout of 60 seconds
+                result = subprocess.run(
+                    cmd, check=True, capture_output=True, text=True, timeout=60
+                )
 
-            # Log any warnings from stderr
-            if result.stderr:
-                logger.warning(f"Whisper stderr output: {result.stderr}")
+                # Log any warnings from stderr
+                if result.stderr:
+                    logger.warning(f"Whisper stderr output: {result.stderr}")
 
-        except subprocess.CalledProcessError as e:
-            # Log the actual error output for debugging
-            if e.stderr:
-                logger.error(f"Whisper error output: {e.stderr}")
-            if e.stdout:
-                logger.error(f"Whisper stdout: {e.stdout}")
-            raise
+            except subprocess.CalledProcessError as e:
+                # Log the actual error output for debugging
+                if e.stderr:
+                    logger.error(f"Whisper error output: {e.stderr}")
+                if e.stdout:
+                    logger.error(f"Whisper stdout: {e.stdout}")
+                raise
 
     def _read_transcription(self, output_path: str):
         """

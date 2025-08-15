@@ -129,6 +129,7 @@ class TestRecorderStartStop:
     def test_start_recording(self, mock_recorder):
         """Test starting a recording."""
         mock_language_config = Mock(spec=LanguageConfig)
+        mock_language_config.language = "en"
 
         # Start recording
         mock_recorder.start(mock_language_config)
@@ -150,6 +151,7 @@ class TestRecorderStartStop:
     def test_start_recording_already_in_progress(self, mock_recorder, caplog):
         """Test starting recording when already recording."""
         mock_language_config = Mock(spec=LanguageConfig)
+        mock_language_config.language = "en"
 
         # Set recording flag
         mock_recorder.is_recording = True
@@ -164,6 +166,7 @@ class TestRecorderStartStop:
     def test_stop_recording(self, mock_recorder):
         """Test stopping a recording."""
         mock_language_config = Mock(spec=LanguageConfig)
+        mock_language_config.language = "en"
 
         # Start recording first
         mock_recorder.start(mock_language_config)
@@ -192,6 +195,7 @@ class TestRecorderStartStop:
     def test_thread_creation_failure(self, mock_recorder, mocker):
         """Test handling of thread creation failure."""
         mock_language_config = Mock(spec=LanguageConfig)
+        mock_language_config.language = "en"
 
         # Mock threading.Thread to raise exception
         mocker.patch(
@@ -239,6 +243,7 @@ class TestRecordingMethod:
         # Setup recorder
         mock_transcriber = Mock()
         mock_language_config = Mock(spec=LanguageConfig)
+        mock_language_config.language = "en"
 
         # Create recorder with mocked initialization
         # Don't use nested patch - mock_pyaudio_stream already patches PyAudio
@@ -295,6 +300,7 @@ class TestRecordingMethod:
         # Setup recorder
         mock_transcriber = Mock()
         mock_language_config = Mock(spec=LanguageConfig)
+        mock_language_config.language = "en"
 
         # Create recorder
         # Don't use nested patch - mock_pyaudio_stream already patches PyAudio
@@ -326,6 +332,7 @@ class TestRecordingMethod:
         # Setup recorder
         mock_transcriber = Mock()
         mock_language_config = Mock(spec=LanguageConfig)
+        mock_language_config.language = "en"
 
         # Don't use nested patch - mock_pyaudio_stream already patches PyAudio
         recorder = Mock(spec=Recorder)
@@ -370,6 +377,7 @@ class TestRecordingMethod:
         # Setup recorder
         mock_transcriber = Mock()
         mock_language_config = Mock(spec=LanguageConfig)
+        mock_language_config.language = "en"
 
         # Create a real-ish recorder object
         recorder = Mock(spec=Recorder)
@@ -415,6 +423,7 @@ class TestRecordingMethod:
         mock_transcriber = Mock()
         mock_transcriber.transcribe.side_effect = Exception("Whisper failed")
         mock_language_config = Mock(spec=LanguageConfig)
+        mock_language_config.language = "en"
 
         # Don't use nested patch - mock_pyaudio_stream already patches PyAudio
         recorder = Mock(spec=Recorder)
@@ -453,6 +462,7 @@ class TestRecordingMethod:
         # Setup recorder
         mock_transcriber = Mock()
         mock_language_config = Mock(spec=LanguageConfig)
+        mock_language_config.language = "en"
 
         # Don't use nested patch - mock_pyaudio_stream already patches PyAudio
         recorder = Mock(spec=Recorder)
@@ -496,6 +506,7 @@ class TestRecordingWrapper:
         )
 
         mock_language_config = Mock(spec=LanguageConfig)
+        mock_language_config.language = "en"
 
         # Run wrapper - should not raise
         recorder._recording_wrapper(mock_language_config)
@@ -520,6 +531,7 @@ class TestRecordingWrapper:
         )
 
         mock_language_config = Mock(spec=LanguageConfig)
+        mock_language_config.language = "en"
 
         # Run wrapper
         recorder._recording_wrapper(mock_language_config)
