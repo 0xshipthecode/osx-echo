@@ -1,17 +1,17 @@
+import argparse
 import logging
 import signal
 import sys
-import argparse
 from pathlib import Path
 
 from pynput import keyboard
 
 from osx_echo.app import App
+from osx_echo.config import Config
+from osx_echo.listeners import build_key_listener, build_listener_multiplexer
+from osx_echo.logging_config import setup_logging
 from osx_echo.recorder import Recorder
 from osx_echo.transcriber import Transcriber
-from osx_echo.listeners import build_key_listener, build_listener_multiplexer
-from osx_echo.config import Config
-from osx_echo.logging_config import setup_logging
 
 
 def parse_arguments():
@@ -52,9 +52,7 @@ Examples:
         help="Validate configuration file and exit",
     )
 
-    parser.add_argument(
-        "-v", "--verbose", action="store_true", help="Enable verbose logging"
-    )
+    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging")
 
     parser.add_argument(
         "--log-structured",
@@ -154,9 +152,9 @@ def validate_config(config_path: str):
         for lang_config in config.language_support:
             print(f"  - {lang_config.language_name} ({lang_config.language})")
             print(f"    Model: {Path(lang_config.whisper_model_path).name}")
-            print(
-                f"    Trigger: {lang_config.trigger['type']} - {', '.join(lang_config.trigger['keys'])}"
-            )
+            ttype = lang_config.trigger["type"]
+            tkeys = ", ".join(lang_config.trigger["keys"])
+            print(f"    Trigger: {ttype} - {tkeys}")
 
         print("\n" + "=" * 50)
         print("Configuration validation successful!\n")

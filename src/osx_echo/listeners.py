@@ -40,17 +40,13 @@ def build_key_listener(app, language_config):
     listener_config = language_config.trigger
     listener_type = listener_config["type"]
     if listener_type == "double_tap":
-        return _DoubleTapListener(
-            app, _parse_key(listener_config["key"]), language_config
-        )
+        return _DoubleTapListener(app, _parse_key(listener_config["key"]), language_config)
     if listener_type == "key_hold":
         return _KeyHoldListener(
             app, [_parse_key(key) for key in listener_config["keys"]], language_config
         )
     if listener_type == "key_press":
-        return _KeyPressListener(
-            app, _parse_key(listener_config["key"]), language_config
-        )
+        return _KeyPressListener(app, _parse_key(listener_config["key"]), language_config)
 
     raise ValueError(f"Invalid key type: {listener_type}")
 
@@ -86,7 +82,6 @@ class _ListenerMultiplexer:
 
 
 class _KeyPressListener:
-
     def __init__(self, app, key, language_config):
         self.app = app
         self.key = key
@@ -165,7 +160,8 @@ class _DoubleTapListener:
 class _KeyHoldListener:
     """
     This listener waits for all specified keys to be pressed and held for recording to be active.
-    When all keys are held, it will record. Whenever one of them is released, the recording will stop.
+    When all keys are held, it will record. Whenever one of them is released, the recording will
+    stop.
     """
 
     def __init__(self, app, keys, language_config):
@@ -178,7 +174,7 @@ class _KeyHoldListener:
         """
         self.app = app
         # FIX: fix the keys_pressed array to accept the keys argument.
-        self.keys_pressed = {key: False for key in keys}
+        self.keys_pressed = dict.fromkeys(keys, False)
         self.language_config = language_config
 
     def on_key_press(self, key):
@@ -201,8 +197,9 @@ class _KeyHoldListener:
             key: The key that was released.
         """
         if key in self.keys_pressed:
-            # Unpress all of the keys since individual key detection seems buggy for multiple keys pressed at a time.
-            # Keys can easily remain hanging, thereby future key presses might becomd false positives.
+            # Unpress all of the keys since individual key detection seems buggy for multiple
+            # keys pressed at a time. Keys can easily remain hanging, thereby future key presses
+            # might becomd false positives.
             for k in self.keys_pressed:
                 self.keys_pressed[k] = False
             self.app.stop_recording()

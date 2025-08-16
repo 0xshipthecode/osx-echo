@@ -5,12 +5,12 @@ This module provides consistent logging setup with performance metrics tracking
 and structured output for debugging and monitoring.
 """
 
-import logging
 import json
+import logging
 import time
 from contextlib import contextmanager
-from typing import Dict, Any, Optional
 from functools import wraps
+from typing import Any
 
 
 class StructuredFormatter(logging.Formatter):
@@ -52,8 +52,7 @@ class HumanReadableFormatter(logging.Formatter):
 
     def __init__(self):
         super().__init__(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            "%(performance_suffix)s",
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s%(performance_suffix)s",
             datefmt="%Y-%m-%d %H:%M:%S",
         )
 
@@ -125,7 +124,7 @@ class OperationTracker:
     """Tracker for collecting metrics during an operation."""
 
     def __init__(self):
-        self.fields: Dict[str, Any] = {}
+        self.fields: dict[str, Any] = {}
 
     def set(self, key: str, value: Any):
         """Set a metric value."""
@@ -139,7 +138,7 @@ class OperationTracker:
 def setup_logging(
     level: str = "INFO",
     structured: bool = False,
-    log_file: Optional[str] = None,
+    log_file: str | None = None,
 ) -> None:
     """
     Configure logging for the entire application.
@@ -205,11 +204,7 @@ def log_performance(func):
         ) as tracker:
             result = func(*args, **kwargs)
 
-            # Try to extract meaningful metrics from result
-            if isinstance(result, str):
-                tracker.set("result_length", len(result))
-            elif isinstance(result, (list, tuple, dict)):
-                tracker.set("result_size", len(result))
+            tracker.set("result_length", len(str(result)))
 
             return result
 

@@ -3,9 +3,9 @@ Configuration classes for osx_echo.
 """
 
 import json
-import os
 import logging
-from typing import List
+import os
+
 import pyaudio
 
 logger = logging.getLogger("osx_echo.config")
@@ -117,9 +117,7 @@ VALID_LANGUAGE_CODES = {
 
 
 class LanguageConfig:
-    def __init__(
-        self, language: str, language_name: str, whisper_model_path: str, trigger: dict
-    ):
+    def __init__(self, language: str, language_name: str, whisper_model_path: str, trigger: dict):
         self.language = language
         self.language_name = language_name
         self.whisper_model_path = whisper_model_path
@@ -145,9 +143,7 @@ class LanguageConfig:
 
         whisper_model_path = config.get("whisper_model_path")
         if not whisper_model_path:
-            raise ValueError(
-                f"Whisper model path is required for language '{language}'"
-            )
+            raise ValueError(f"Whisper model path is required for language '{language}'")
 
         # Validate model file exists
         if not os.path.exists(whisper_model_path):
@@ -157,9 +153,7 @@ class LanguageConfig:
 
         trigger = config.get("trigger")
         if not trigger:
-            raise ValueError(
-                f"Trigger configuration is required for language '{language}'"
-            )
+            raise ValueError(f"Trigger configuration is required for language '{language}'")
 
         if "type" not in trigger:
             raise ValueError(f"Trigger type is required for language '{language}'")
@@ -216,10 +210,10 @@ class Config:
             raise FileNotFoundError(f"Configuration file not found: {path_to_config}")
 
         try:
-            with open(path_to_config, "r") as file:
+            with open(path_to_config) as file:
                 config = json.load(file)
         except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid JSON in configuration file: {e}")
+            raise ValueError(f"Invalid JSON in configuration file: {e}") from e
 
         # Validate whisper executable path
         whisper_main_path = config.get("whisper_main_path")
@@ -227,9 +221,7 @@ class Config:
             raise ValueError("'whisper_main_path' is required in configuration")
 
         if not os.path.exists(whisper_main_path):
-            raise FileNotFoundError(
-                f"Whisper executable not found: {whisper_main_path}"
-            )
+            raise FileNotFoundError(f"Whisper executable not found: {whisper_main_path}")
 
         if not os.access(whisper_main_path, os.X_OK):
             raise ValueError(f"Whisper file is not executable: {whisper_main_path}")
@@ -269,7 +261,7 @@ class Config:
                 language_configs.append(lang_config)
 
             except (ValueError, FileNotFoundError) as e:
-                raise ValueError(f"Error in language config [{idx}]: {e}")
+                raise ValueError(f"Error in language config [{idx}]: {e}") from e
 
         # Get input device name
         input_device_name = config.get("input_device_name")
@@ -316,24 +308,18 @@ class Config:
 
         # Try to find a microphone device
         mic_devices = [
-            d
-            for d in available_devices
-            if "microphone" in d.lower() or "mic" in d.lower()
+            d for d in available_devices if "microphone" in d.lower() or "mic" in d.lower()
         ]
         if mic_devices:
             self.input_device_name = mic_devices[0]
-            logger.warning(
-                f"Falling back to microphone device: {self.input_device_name}"
-            )
+            logger.warning(f"Falling back to microphone device: {self.input_device_name}")
             return
 
         # Use the first available device
         self.input_device_name = available_devices[0]
-        logger.warning(
-            f"Falling back to first available device: {self.input_device_name}"
-        )
+        logger.warning(f"Falling back to first available device: {self.input_device_name}")
 
-    def _get_available_input_devices(self) -> List[str]:
+    def _get_available_input_devices(self) -> list[str]:
         """Get list of available audio input devices.
 
         Returns:

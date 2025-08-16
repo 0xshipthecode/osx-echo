@@ -4,9 +4,9 @@ for the OSX Echo dictation tool. It provides a control interface for the
 recording and transcription process with status indicators using pyAnyBar.
 """
 
-from .anybar import AnyBar
 import time
 
+from .anybar import AnyBar
 from .config import Config, LanguageConfig
 
 
@@ -36,9 +36,7 @@ class App:
         self.config = config
 
         # Use provided status indicator or default to AnyBar
-        self.status_indicator = (
-            status_indicator if status_indicator is not None else AnyBar()
-        )
+        self.status_indicator = status_indicator if status_indicator is not None else AnyBar()
         self.status_indicator.change("green")
 
         # Flag to control the app's running state

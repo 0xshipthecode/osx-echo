@@ -7,11 +7,10 @@ The module uses PyAudio for audio capture and the wave module for saving audio d
 It also interacts with a transcriber object to convert the recorded audio to text.
 """
 
+import logging
 import threading
 import time
 from wave import Wave_write
-
-import logging
 
 import pyaudio
 
@@ -300,9 +299,7 @@ class Recorder:
                     frames_per_buffer=frames_per_buffer,
                     input_device_index=self.input_device_index,
                 )
-                logger.info(
-                    f"Audio stream opened successfully on device {self.input_device_index}"
-                )
+                logger.info(f"Audio stream opened successfully on device {self.input_device_index}")
             except Exception as e:
                 logger.error(f"Failed to open audio stream: {e}")
                 raise RuntimeError(
@@ -375,14 +372,13 @@ class Recorder:
                 tracker.set("audio_duration_s", audio_duration_s)
 
                 logger.info(
-                    f"Audio written to file {RECORDING_FILE_NAME}, size: {len(audio_data)} bytes, duration: {audio_duration_s:.2f}s"
+                    f"Audio written to file {RECORDING_FILE_NAME}, "
+                    f"size: {len(audio_data)} bytes, duration: {audio_duration_s:.2f}s"
                 )
 
             except Exception as e:
                 logger.error(f"Failed to write audio file: {e}")
-                raise IOError(
-                    f"Could not save audio to {RECORDING_FILE_NAME}: {e}"
-                ) from e
+                raise OSError(f"Could not save audio to {RECORDING_FILE_NAME}: {e}") from e
 
             finally:
                 if wave_file is not None:

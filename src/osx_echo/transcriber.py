@@ -11,11 +11,11 @@ Classes:
     Transcriber: Handles audio transcription and text output via simulated typing.
 """
 
-import subprocess
-import time
+import logging
 import os
 import re
-import logging
+import subprocess
+import time
 
 from pynput import keyboard
 
@@ -120,9 +120,7 @@ class Transcriber:
 
             except subprocess.TimeoutExpired as e:
                 logger.error(f"Whisper.cpp timed out after {e.timeout} seconds")
-                raise RuntimeError(
-                    f"Transcription timed out after {e.timeout} seconds"
-                ) from e
+                raise RuntimeError(f"Transcription timed out after {e.timeout} seconds") from e
 
             except Exception as e:
                 logger.error(f"Unexpected error during transcription: {e}")
@@ -132,9 +130,7 @@ class Transcriber:
                 # Clean up files even if transcription fails
                 self._cleanup_files(audio_path, output_path)
 
-    def _run_whisper(
-        self, audio_path: str, output_path: str, language_support: LanguageConfig
-    ):
+    def _run_whisper(self, audio_path: str, output_path: str, language_support: LanguageConfig):
         """
         Run the whisper.cpp executable to transcribe audio.
 
@@ -150,9 +146,7 @@ class Transcriber:
         """
         # Validate model file exists
         if not os.path.exists(language_support.whisper_model_path):
-            raise RuntimeError(
-                f"Whisper model not found: {language_support.whisper_model_path}"
-            )
+            raise RuntimeError(f"Whisper model not found: {language_support.whisper_model_path}")
 
         cmd = [
             self.whisper_main_path,
@@ -177,9 +171,7 @@ class Transcriber:
         ):
             try:
                 # Run with a timeout of 60 seconds
-                result = subprocess.run(
-                    cmd, check=True, capture_output=True, text=True, timeout=60
-                )
+                result = subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=60)
 
                 # Log any warnings from stderr
                 if result.stderr:
@@ -209,12 +201,10 @@ class Transcriber:
         """
         if not os.path.exists(output_path):
             logger.error(f"Transcription output file not found: {output_path}")
-            raise FileNotFoundError(
-                f"Whisper did not create output file: {output_path}"
-            )
+            raise FileNotFoundError(f"Whisper did not create output file: {output_path}")
 
         try:
-            with open(output_path, "r", encoding="utf-8") as f:
+            with open(output_path, encoding="utf-8") as f:
                 content = f.read()
 
             if not content:
@@ -232,7 +222,7 @@ class Transcriber:
 
         except Exception as e:
             logger.error(f"Failed to read transcription file: {e}")
-            raise IOError(f"Could not read transcription from {output_path}") from e
+            raise OSError(f"Could not read transcription from {output_path}") from e
 
     def _type_transcribed_text(self, text: str):
         """

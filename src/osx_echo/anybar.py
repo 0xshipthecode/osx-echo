@@ -39,5 +39,5 @@ class AnyBar:
         if text is None:
             self.socket.sendto(color.encode("utf-8"), (self.address, self.port))
         else:
-            message = "{} {}".format(color, text).encode("utf-8")
+            message = f"{color} {text}".encode()
             self.socket.sendto(message, (self.address, self.port))
