@@ -5,10 +5,11 @@ Unit tests for the Transcriber class with comprehensive error handling coverage.
 import os
 import subprocess
 from unittest.mock import Mock, call
+
 import pytest
 
-from osx_echo.transcriber import Transcriber, _clean_content, _type_content
 from osx_echo.config import LanguageConfig
+from osx_echo.transcriber import Transcriber, _clean_content, _type_content
 
 
 class TestTranscriberInitialization:
@@ -288,7 +289,7 @@ class TestReadTranscriptionMethod:
         output_file.touch()
 
         # Mock open to raise IOError
-        mocker.patch("builtins.open", side_effect=IOError("Permission denied"))
+        mocker.patch("builtins.open", side_effect=OSError("Permission denied"))
 
         with pytest.raises(IOError) as exc_info:
             mock_transcriber._read_transcription(str(output_file))

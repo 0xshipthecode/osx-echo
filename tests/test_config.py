@@ -4,9 +4,10 @@ Unit tests for configuration validation and device selection.
 
 import json
 from unittest.mock import MagicMock
+
 import pytest
 
-from osx_echo.config import Config, LanguageConfig, VALID_LANGUAGE_CODES
+from osx_echo.config import VALID_LANGUAGE_CODES, Config, LanguageConfig
 
 
 class TestLanguageConfig:

@@ -38,21 +38,15 @@ class Recorder:
             transcriber: An object responsible for transcribing audio.
             input_device_name (str): exact name of the input device to use.
 
-        Raises:
-            ValueError: If the specified input device is not found.
-            RuntimeError: If PyAudio initialization fails.
-
         Note:
-            This method also prints information about available audio devices.
+            Device index is determined dynamically at recording start to handle
+            device connect/disconnect scenarios.
         """
         self._recording_event = threading.Event()  # Thread-safe recording state
         self.transcriber = transcriber
-        self.input_device_index = None
+        self.input_device_name = input_device_name
         self.language_config = None
         self._recording_thread = None
-
-        # Find and set the input device
-        self.input_device_index = self._find_input_device(input_device_name)
 
     @property
     def is_recording(self):
@@ -77,44 +71,30 @@ class Recorder:
         else:
             self._recording_event.clear()
 
-    def _find_input_device(self, device_name):
+    def _find_input_device(self, device_name: str, p) -> int:
         """
-        Find the input device by name.
+        Find the input device by name using an existing PyAudio instance.
 
         Args:
             device_name (str): The name of the device to find.
+            p: PyAudio instance to use for device enumeration.
 
         Returns:
             int: The index of the found device.
 
         Raises:
-            RuntimeError: If PyAudio initialization fails.
             ValueError: If the device is not found.
         """
-        try:
-            p = pyaudio.PyAudio()
-            try:
-                device_index = self._search_for_device(p, device_name)
-                if device_index is None:
-                    available = self._get_available_devices(p)
-                    raise ValueError(
-                        f"Input device '{device_name}' not found. "
-                        f"Available devices: {', '.join(available)}"
-                    )
+        device_index = self._search_for_device(p, device_name)
+        if device_index is None:
+            available = self._get_available_devices(p)
+            raise ValueError(
+                f"Input device '{device_name}' not found. "
+                f"Available devices: {', '.join(available)}"
+            )
 
-                print(f"Selected device index {device_index} [{device_name}]")
-                logger.info(f"Selected device index {device_index} [{device_name}]")
-                return device_index
-
-            finally:
-                p.terminate()
-
-        except ValueError:
-            # Re-raise ValueError as is
-            raise
-        except Exception as e:
-            logger.error(f"Failed to initialize audio system: {e}")
-            raise RuntimeError(f"Audio system initialization failed: {e}") from e
+        logger.info(f"Selected device index {device_index} [{device_name}]")
+        return device_index
 
     def _search_for_device(self, p, device_name):
         """
@@ -289,6 +269,9 @@ class Recorder:
             # Initialize PyAudio
             p = pyaudio.PyAudio()
 
+            # Find device index dynamically at recording start
+            input_device_index = self._find_input_device(self.input_device_name, p)
+
             # Open audio stream with error handling
             try:
                 stream = p.open(
@@ -297,13 +280,13 @@ class Recorder:
                     rate=sample_rate,
                     input=True,
                     frames_per_buffer=frames_per_buffer,
-                    input_device_index=self.input_device_index,
+                    input_device_index=input_device_index,
                 )
-                logger.info(f"Audio stream opened successfully on device {self.input_device_index}")
+                logger.info(f"Audio stream opened successfully on device {input_device_index}")
             except Exception as e:
                 logger.error(f"Failed to open audio stream: {e}")
                 raise RuntimeError(
-                    f"Could not open audio stream on device {self.input_device_index}: {e}"
+                    f"Could not open audio stream on device {input_device_index}: {e}"
                 ) from e
 
             # Record audio

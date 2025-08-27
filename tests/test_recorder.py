@@ -3,102 +3,30 @@ Unit tests for the Recorder class with comprehensive error handling coverage.
 """
 
 import time
-from unittest.mock import Mock, MagicMock
+from unittest.mock import MagicMock, Mock
+
 import pytest
 
-from osx_echo.recorder import Recorder
 from osx_echo.config import LanguageConfig
 from osx_echo.constants import RECORDING_FILE_NAME
+from osx_echo.recorder import Recorder
 
 
 class TestRecorderInitialization:
     """Test Recorder initialization and device discovery."""
 
     def test_successful_initialization(self, mocker):
-        """Test successful recorder initialization with valid device."""
-        # Mock PyAudio
-        mock_pyaudio = mocker.patch("osx_echo.recorder.pyaudio.PyAudio")
-        mock_p = MagicMock()
-        mock_pyaudio.return_value = mock_p
-
-        # Mock device discovery
-        mock_p.get_host_api_info_by_index.return_value = {"deviceCount": 2}
-        mock_p.get_device_info_by_host_api_device_index.side_effect = [
-            {"index": 0, "name": "Device 1"},
-            {"index": 1, "name": "Test Device"},
-        ]
-
+        """Test successful recorder initialization."""
         mock_transcriber = Mock()
 
         # Initialize recorder
         recorder = Recorder(mock_transcriber, "Test Device")
 
         # Assertions
-        assert recorder.input_device_index == 1
+        assert recorder.input_device_name == "Test Device"
         assert recorder.transcriber == mock_transcriber
         assert not recorder.is_recording
-        mock_p.terminate.assert_called_once()
 
-    def test_device_not_found(self, mocker):
-        """Test initialization fails when device not found."""
-        # Mock PyAudio
-        mock_pyaudio = mocker.patch("osx_echo.recorder.pyaudio.PyAudio")
-        mock_p = MagicMock()
-        mock_pyaudio.return_value = mock_p
-
-        # Mock device discovery
-        mock_p.get_host_api_info_by_index.return_value = {"deviceCount": 2}
-        mock_p.get_device_info_by_host_api_device_index.side_effect = [
-            {"index": 0, "name": "Device 1"},
-            {"index": 1, "name": "Device 2"},
-            # Second call for getting available devices
-            {"index": 0, "name": "Device 1"},
-            {"index": 1, "name": "Device 2"},
-        ]
-
-        mock_transcriber = Mock()
-
-        # Should raise ValueError directly
-        with pytest.raises(ValueError) as exc_info:
-            Recorder(mock_transcriber, "Non-existent Device")
-
-        assert "Non-existent Device" in str(exc_info.value)
-        assert "not found" in str(exc_info.value)
-        assert "Available devices:" in str(exc_info.value)
-        mock_p.terminate.assert_called_once()
-
-    def test_no_audio_devices(self, mocker):
-        """Test initialization fails when no audio devices available."""
-        # Mock PyAudio
-        mock_pyaudio = mocker.patch("osx_echo.recorder.pyaudio.PyAudio")
-        mock_p = MagicMock()
-        mock_pyaudio.return_value = mock_p
-
-        # Mock no devices
-        mock_p.get_host_api_info_by_index.return_value = {"deviceCount": 0}
-
-        mock_transcriber = Mock()
-
-        # Should raise RuntimeError
-        with pytest.raises(RuntimeError) as exc_info:
-            Recorder(mock_transcriber, "Any Device")
-
-        assert "No audio devices found" in str(exc_info.value)
-        mock_p.terminate.assert_called_once()
-
-    def test_pyaudio_initialization_failure(self, mocker):
-        """Test handling of PyAudio initialization failure."""
-        # Mock PyAudio to raise exception
-        mock_pyaudio = mocker.patch("osx_echo.recorder.pyaudio.PyAudio")
-        mock_pyaudio.side_effect = Exception("PyAudio init failed")
-
-        mock_transcriber = Mock()
-
-        # Should raise RuntimeError
-        with pytest.raises(RuntimeError) as exc_info:
-            Recorder(mock_transcriber, "Test Device")
-
-        assert "Audio system initialization failed" in str(exc_info.value)
 
 
 class TestRecorderStartStop:
@@ -107,17 +35,6 @@ class TestRecorderStartStop:
     @pytest.fixture
     def mock_recorder(self, mocker):
         """Create a mock recorder with initialized state."""
-        # Mock PyAudio initialization
-        mock_pyaudio = mocker.patch("osx_echo.recorder.pyaudio.PyAudio")
-        mock_p = MagicMock()
-        mock_pyaudio.return_value = mock_p
-
-        mock_p.get_host_api_info_by_index.return_value = {"deviceCount": 1}
-        mock_p.get_device_info_by_host_api_device_index.return_value = {
-            "index": 0,
-            "name": "Test Device",
-        }
-
         mock_transcriber = Mock()
         recorder = Recorder(mock_transcriber, "Test Device")
 
@@ -210,6 +127,157 @@ class TestRecorderStartStop:
         assert not mock_recorder.is_recording
 
 
+class TestDynamicDeviceDiscovery:
+    """Test dynamic device discovery during recording."""
+
+    def test_device_found_at_recording_time(self, mocker):
+        """Test successful device discovery when recording starts."""
+        # Mock PyAudio
+        mock_pyaudio_class = mocker.patch("osx_echo.recorder.pyaudio.PyAudio")
+        mock_p = MagicMock()
+        mock_pyaudio_class.return_value = mock_p
+
+        # Mock device discovery
+        mock_p.get_host_api_info_by_index.return_value = {"deviceCount": 2}
+        mock_p.get_device_info_by_host_api_device_index.side_effect = [
+            {"index": 0, "name": "Device 1"},
+            {"index": 1, "name": "Test Device"},
+        ]
+
+        # Mock stream operations
+        mock_stream = MagicMock()
+        mock_p.open.return_value = mock_stream
+        mock_p.get_sample_size.return_value = 2
+
+        # Mock wave file
+        mock_wave_write = mocker.patch("osx_echo.recorder.Wave_write")
+        mock_wave_file = MagicMock()
+        mock_wave_write.return_value = mock_wave_file
+
+        # Create recorder
+        mock_transcriber = Mock()
+        recorder = Recorder(mock_transcriber, "Test Device")
+
+        # Mock recording control
+        call_count = [0]
+        def control_recording(*args, **kwargs):
+            call_count[0] += 1
+            if call_count[0] >= 2:
+                return False
+            return True
+
+        recorder._recording_event = MagicMock()
+        recorder._recording_event.is_set.side_effect = control_recording
+
+        # Mock language config
+        mock_language_config = Mock(spec=LanguageConfig)
+        mock_language_config.language = "en"
+
+        # Mock stream read to return some data then stop
+        mock_stream.read.return_value = b"audio_data"
+
+        # Run recording
+        recorder._recording(mock_language_config)
+
+        # Verify device was discovered dynamically
+        # Check that device search was performed
+        mock_p.get_host_api_info_by_index.assert_called()
+        mock_p.get_device_info_by_host_api_device_index.assert_called()
+
+        # Verify stream was opened with correct device index (1 = "Test Device")
+        mock_p.open.assert_called_once()
+        call_args = mock_p.open.call_args
+        assert call_args.kwargs['input_device_index'] == 1
+
+    def test_device_not_found_at_recording_time(self, mocker):
+        """Test device discovery failure when recording starts."""
+        # Mock PyAudio
+        mock_pyaudio_class = mocker.patch("osx_echo.recorder.pyaudio.PyAudio")
+        mock_p = MagicMock()
+        mock_pyaudio_class.return_value = mock_p
+
+        # Mock device discovery - device not found
+        mock_p.get_host_api_info_by_index.return_value = {"deviceCount": 2}
+        mock_p.get_device_info_by_host_api_device_index.side_effect = [
+            {"index": 0, "name": "Device 1"},
+            {"index": 1, "name": "Device 2"},
+            # For available devices list
+            {"index": 0, "name": "Device 1"},
+            {"index": 1, "name": "Device 2"},
+        ]
+
+        # Create recorder
+        mock_transcriber = Mock()
+        recorder = Recorder(mock_transcriber, "Non-existent Device")
+
+        # Mock language config
+        mock_language_config = Mock(spec=LanguageConfig)
+        mock_language_config.language = "en"
+
+        # Recording should fail with ValueError
+        with pytest.raises(ValueError) as exc_info:
+            recorder._recording(mock_language_config)
+
+        assert "Non-existent Device" in str(exc_info.value)
+        assert "not found" in str(exc_info.value)
+        assert "Available devices:" in str(exc_info.value)
+
+    def test_device_discovery_handles_reconnected_device(self, mocker):
+        """Test that device discovery works when device index changes due to reconnection."""
+        # Mock PyAudio
+        mock_pyaudio_class = mocker.patch("osx_echo.recorder.pyaudio.PyAudio")
+        mock_p = MagicMock()
+        mock_pyaudio_class.return_value = mock_p
+
+        # Simulate device at different index after reconnection
+        mock_p.get_host_api_info_by_index.return_value = {"deviceCount": 3}
+        mock_p.get_device_info_by_host_api_device_index.side_effect = [
+            {"index": 0, "name": "Built-in Microphone"},
+            {"index": 1, "name": "Other Device"},
+            {"index": 2, "name": "Test Device"},  # Device now at index 2
+        ]
+
+        # Mock stream operations
+        mock_stream = MagicMock()
+        mock_p.open.return_value = mock_stream
+        mock_p.get_sample_size.return_value = 2
+
+        # Mock wave file
+        mock_wave_write = mocker.patch("osx_echo.recorder.Wave_write")
+        mock_wave_file = MagicMock()
+        mock_wave_write.return_value = mock_wave_file
+
+        # Create recorder
+        mock_transcriber = Mock()
+        recorder = Recorder(mock_transcriber, "Test Device")
+
+        # Mock recording control
+        call_count = [0]
+        def control_recording(*args, **kwargs):
+            call_count[0] += 1
+            if call_count[0] >= 2:
+                return False
+            return True
+
+        recorder._recording_event = MagicMock()
+        recorder._recording_event.is_set.side_effect = control_recording
+
+        # Mock language config
+        mock_language_config = Mock(spec=LanguageConfig)
+        mock_language_config.language = "en"
+
+        # Mock stream read
+        mock_stream.read.return_value = b"audio_data"
+
+        # Run recording
+        recorder._recording(mock_language_config)
+
+        # Verify stream was opened with correct device index (2 = "Test Device")
+        mock_p.open.assert_called_once()
+        call_args = mock_p.open.call_args
+        assert call_args.kwargs['input_device_index'] == 2
+
+
 class TestRecordingMethod:
     """Test the _recording method with various scenarios."""
 
@@ -251,7 +319,8 @@ class TestRecordingMethod:
         recorder._recording_event = Mock()
         recorder._recording_event.is_set.return_value = True
         recorder._recording_event.clear = Mock()
-        recorder.input_device_index = 0
+        recorder.input_device_name = "Test Device"
+        recorder._find_input_device = Mock(return_value=0)
         recorder.transcriber = mock_transcriber
 
         # Import the actual _recording method
@@ -308,7 +377,8 @@ class TestRecordingMethod:
         recorder._recording_event = Mock()
         recorder._recording_event.is_set.return_value = True
         recorder._recording_event.clear = Mock()
-        recorder.input_device_index = 0
+        recorder.input_device_name = "Test Device"
+        recorder._find_input_device = Mock(return_value=0)
         recorder.transcriber = mock_transcriber
 
         from osx_echo.recorder import Recorder as RealRecorder
@@ -339,7 +409,8 @@ class TestRecordingMethod:
         recorder._recording_event = Mock()
         recorder._recording_event.is_set.return_value = True
         recorder._recording_event.clear = Mock()
-        recorder.input_device_index = 0
+        recorder.input_device_name = "Test Device"
+        recorder._find_input_device = Mock(return_value=0)
         recorder.transcriber = mock_transcriber
 
         from osx_echo.recorder import Recorder as RealRecorder
@@ -384,7 +455,8 @@ class TestRecordingMethod:
         recorder._recording_event = Mock()
         recorder._recording_event.is_set.return_value = True
         recorder._recording_event.clear = Mock()
-        recorder.input_device_index = 0
+        recorder.input_device_name = "Test Device"
+        recorder._find_input_device = Mock(return_value=0)
         recorder.transcriber = mock_transcriber
 
         from osx_echo.recorder import Recorder as RealRecorder
@@ -403,7 +475,7 @@ class TestRecordingMethod:
         mock_pyaudio_stream["stream"].read = read_and_stop
 
         # Mock wave file write to fail
-        mock_pyaudio_stream["wave_write_class"].side_effect = IOError("Disk full")
+        mock_pyaudio_stream["wave_write_class"].side_effect = OSError("Disk full")
 
         # Should raise IOError
         with pytest.raises(IOError) as exc_info:
@@ -430,7 +502,8 @@ class TestRecordingMethod:
         recorder._recording_event = Mock()
         recorder._recording_event.is_set.return_value = True
         recorder._recording_event.clear = Mock()
-        recorder.input_device_index = 0
+        recorder.input_device_name = "Test Device"
+        recorder._find_input_device = Mock(return_value=0)
         recorder.transcriber = mock_transcriber
 
         from osx_echo.recorder import Recorder as RealRecorder
@@ -469,7 +542,8 @@ class TestRecordingMethod:
         recorder._recording_event = Mock()
         recorder._recording_event.is_set.return_value = False  # Stop immediately
         recorder._recording_event.clear = Mock()
-        recorder.input_device_index = 0
+        recorder.input_device_name = "Test Device"
+        recorder._find_input_device = Mock(return_value=0)
         recorder.transcriber = mock_transcriber
 
         from osx_echo.recorder import Recorder as RealRecorder

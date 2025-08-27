@@ -2,7 +2,8 @@
 Unit tests for the App class with dependency injection.
 """
 
-from unittest.mock import Mock, MagicMock, call
+from unittest.mock import MagicMock, Mock, call
+
 import pytest
 
 from osx_echo.app import App
